@@ -6,16 +6,43 @@ const
   crypto = require('crypto'),
   express = require('express'),
   https = require('https'),
-  request = require('request');
+  request = require('request'),
+  path = require('path'),
+  httpProxy = require('http-proxy'),
+  app = express();
 
-var app = express();
-app.set('port', (process.env.PORT || 5000))
+let proxy = httpProxy.createProxyServer({
+  changeOrigin: true
+});
+let isProduction = process.env.NODE_ENV === 'production';
+let port = isProduction ? process.env.PORT : 5000;
+let publicPath = path.resolve(__dirname, 'public');
+
+if (!isProduction) {
+  let bundle = require('./server/bundle.js');
+  bundle();
+
+  app.all('/build/*', (req, res) => {
+    proxy.web(req, res, {
+      target: 'http://localhost:8080'
+    });
+  });
+}
+
+// It is important to catch any errors from the proxy or the
+// server will crash. An example of this is connecting to the
+// server when webpack is bundling
+proxy.on('error', function(e) {
+  console.log('Could not connect to proxy, please try again...');
+});
+
+app.set('port', port)
 app.set('view engine', 'ejs');
 
 // Process application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json({ verify: verifyRequestSignature }));
-app.use(express.static('public'));
+app.use(express.static(publicPath));
 
 /*
  * Be sure to setup your config values before running this code. You can
