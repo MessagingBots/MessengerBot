@@ -7,6 +7,9 @@ var buildPath = path.resolve(__dirname, 'public', 'build');
 var mainPath = path.resolve(__dirname, 'app', 'main.js');
 
 var config = {
+  resolveLoader: {
+    root: path.join(__dirname, 'node_modules')
+  },
   devtool: 'eval',
   entry: [
 
@@ -40,7 +43,7 @@ var config = {
     // ES6/7 syntax and JSX transpiling out of the box
     {
       test: /\.js$/,
-      loader: 'babel',
+      loader: 'babel-loader',
       exclude: [nodeModulesPath]
     },
 
