@@ -82,6 +82,6 @@ app.use((0, _connectFlash2.default)());
 
 (0, _routes2.default)(app, _passport2.default);
 
-app.listen(3000, function (req, res) {
+app.listen(process.env.PORT || 3000, function (req, res) {
   console.log('Messaing bot server running at port 3000.');
 });
