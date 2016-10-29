@@ -14,12 +14,13 @@ var FacebookStrategy = require('passport-facebook').Strategy;
 var Student = require('../models/Student');
 
 var fbConfig = _default2.default.fb;
+var callbackURL = process.env.NODE_ENV === 'prod' ? fbConfig.callbackURLProd : fbConfig.callbackURLDev;
 
 module.exports = function (passport) {
   passport.use('facebook', new FacebookStrategy({
     clientID: fbConfig.appID,
     clientSecret: fbConfig.appSecret,
-    callbackURL: fbConfig.callbackURL,
+    callbackURL: callbackURL,
     passReqToCallback: true
   }, function (req, accessToken, refreshToken, profile, done) {
     process.nextTick(function () {
