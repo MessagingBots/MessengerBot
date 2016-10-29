@@ -81,6 +81,8 @@ module.exports = (app, passport) => {
         if (loginErr) {
           return next(err);
         }
+        console.log('User was logged in');
+        console.log(user);
         return res.redirect(`${req.session.redirectURI}&authorization_code=${req.session.authCode}`);
       });
     })(req, res, next);

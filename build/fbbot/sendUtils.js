@@ -9,16 +9,17 @@ var _request = require('request');
 
 var _request2 = _interopRequireDefault(_request);
 
-var _default = require('../config/default');
+var _config = require('config');
 
-var _default2 = _interopRequireDefault(_default);
+var _config2 = _interopRequireDefault(_config);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Student = require('../models/Student');
 
-var API_URL = process.env.NODE_ENV === 'prod' ? _default2.default.prod.API_URL : _default2.default.dev.API_URL;
-var SERVER_URL = process.env.NODE_ENV === 'prod' ? _default2.default.prod.SERVER_URL : _default2.default.dev.SERVER_URL;
+var API_URL = _config2.default.get('API_URL');
+var SERVER_URL = _config2.default.get('SERVER_URL');
+var fbConfig = _config2.default.get('fb');
 
 /*
  * Call the Send API. The message data goes in the body. If successful, we'll
@@ -28,7 +29,7 @@ var SERVER_URL = process.env.NODE_ENV === 'prod' ? _default2.default.prod.SERVER
 function callSendAPI(messageData) {
   (0, _request2.default)({
     uri: 'https://graph.facebook.com/v2.6/me/messages',
-    qs: { access_token: _default2.default.fb.pageAccessToken },
+    qs: { access_token: fbConfig.pageAccessToken },
     method: 'POST',
     json: messageData
 
@@ -67,7 +68,7 @@ function sendAccountLinking(recipientId) {
             image_url: SERVER_URL + 'assets/thumbsup.png',
             buttons: [{
               type: 'account_link',
-              url: API_URL + 'auth/facebook?senderId=' + recipientId + '&pat=' + _default2.default.fb.pageAccessToken
+              url: API_URL + 'auth/facebook?senderId=' + recipientId + '&pat=' + fbConfig.pageAccessToken
             }]
           }]
         }

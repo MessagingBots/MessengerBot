@@ -4,18 +4,20 @@ var _crypto = require('crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
 
-var _default = require('../config/default');
+var _config = require('config');
 
-var _default2 = _interopRequireDefault(_default);
+var _config2 = _interopRequireDefault(_config);
 
 var _sendUtils = require('./sendUtils');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Student = require('../models/Student');
-var API_URL = process.env.NODE_ENV === 'dev' ? _default2.default.dev.API_URL : _default2.default.prod.API_URL;
-var SERVER_URL = process.env.NODE_ENV === 'dev' ? _default2.default.dev.SERVER_URL : _default2.default.prod.SERVER_URL;
-var APP_SECRET = _default2.default.fb.appSecret;
+
+var API_URL = _config2.default.get('API_URL');
+var SERVER_URL = _config2.default.get('SERVER_URL');
+var fbConfig = _config2.default.get('fb');
+var APP_SECRET = fbConfig.appSecret;
 
 /*
  * Verify that the callback came from Facebook. Using the App Secret from
@@ -224,7 +226,7 @@ function receivedMessageRead(event) {
   var watermark = event.read.watermark;
   var sequenceNumber = event.read.seq;
 
-  console.log("Received message read event for watermark %d and sequence " + "number %d", watermark, sequenceNumber);
+  console.log('Received message read event for watermark %d and sequence ' + 'number %d', watermark, sequenceNumber);
 }
 /*
  * Account Link Event
@@ -241,16 +243,16 @@ function receivedAccountLink(event) {
   var status = event.account_linking.status;
   var authCode = event.account_linking.authorization_code;
 
-  console.log("Received account link event with for user %d with status %s " + "and auth code %s ", senderID, status, authCode);
+  console.log('Received account link event with for user %d with status %s ' + 'and auth code %s ', senderID, status, authCode);
 }
 
 exports.get = function (req, res) {
-  if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === _default2.default.verifyToken) {
+  if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === fbConfig.verifyToken) {
     console.log('Validating webhook');
     res.status(200).send(req.query['hub.challenge']);
   } else {
     console.log('your token: ');
-    console.log(_default2.default.verifyToken);
+    console.log(fbConfig.verifyToken);
     console.log('token fb sent');
     console.log(req.query['hub.verify_token']);
     console.error('Failed validation. Make sure the validation tokens match.');
@@ -262,7 +264,7 @@ exports.post = function (req, res) {
   var data = req.body;
 
   // Make sure this is a page subscription
-  if (data.object == 'page') {
+  if (data.object === 'page') {
     // Iterate over each entry
     // There may be multiple if batched
     data.entry.forEach(function (pageEntry) {
@@ -284,7 +286,7 @@ exports.post = function (req, res) {
         } else if (messagingEvent.account_linking) {
           receivedAccountLink(messagingEvent);
         } else {
-          console.log("Webhook received unknown messagingEvent: ", messagingEvent);
+          console.log('Webhook received unknown messagingEvent: ', messagingEvent);
         }
       });
     });

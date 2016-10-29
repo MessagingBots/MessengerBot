@@ -4,16 +4,16 @@ var _axios = require('axios');
 
 var _axios2 = _interopRequireDefault(_axios);
 
-var _default = require('../config/default');
+var _config = require('config');
 
-var _default2 = _interopRequireDefault(_default);
+var _config2 = _interopRequireDefault(_config);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var FacebookStrategy = require('passport-facebook').Strategy;
 var Student = require('../models/Student');
 
-var fbConfig = _default2.default.fb;
+var fbConfig = _config2.default.get('fb');
 var callbackURL = process.env.NODE_ENV === 'prod' ? fbConfig.callbackURLProd : fbConfig.callbackURLDev;
 
 module.exports = function (passport) {
@@ -46,7 +46,7 @@ module.exports = function (passport) {
         console.log(profile);
 
         // Request the user's Page-Scoped ID and senderID from FB so we can associate their senderID
-        _axios2.default.get('https://graph.facebook.com/v2.6/me?access_token=' + _default2.default.fb.pageAccessToken + '&fields=recipient&account_linking_token=' + req.session.account_linking_token).then(function (succ) {
+        _axios2.default.get('https://graph.facebook.com/v2.6/me?access_token=' + fbConfig.pageAccessToken + '&fields=recipient&account_linking_token=' + req.session.account_linking_token).then(function (succ) {
           // set all of the facebook information in our user model
           newStudent.fb.id = profile.id; // set the users facebook id
           // we will save the token that facebook provides to the user

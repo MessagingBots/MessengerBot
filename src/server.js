@@ -7,14 +7,11 @@ import passport from 'passport';
 import session from 'express-session';
 import flash from 'connect-flash';
 import bodyParser from 'body-parser';
+import config from 'config';
 
 import routes from './routes/routes';
-import config from './config/default';
 
-// const DB_URL = (process.env.NODE_ENV === 'prod') ?
-  // config.prod.dbURL : config.dev.dbURL;
-const DB_URL = config.prod.dbURL;
-
+const DB_URL = config.get('dbURL');
 const publicPath = path.resolve('public');
 const app = express();
 
@@ -25,9 +22,6 @@ require('./passport/init')(passport);
 
 mongoose.connect(DB_URL);
 
-console.log('heroku');
-console.log('config');
-console.log(config);
 // Set up express app
 app.use(morgan('dev'));
 app.use(cookieParser());
@@ -47,7 +41,7 @@ app.use(flash());
 
 routes(app, passport);
 
-app.listen(3000, (req, res) => {
-  console.log('Messaing bot server running at port 3000.')
+app.listen(process.env.PORT || 3000, (req, res) => {
+  console.log('Messaging bot server running at port ' + (process.env.PORT || 3000));
 });
 

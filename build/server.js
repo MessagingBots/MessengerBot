@@ -36,20 +36,17 @@ var _bodyParser = require('body-parser');
 
 var _bodyParser2 = _interopRequireDefault(_bodyParser);
 
+var _config = require('config');
+
+var _config2 = _interopRequireDefault(_config);
+
 var _routes = require('./routes/routes');
 
 var _routes2 = _interopRequireDefault(_routes);
 
-var _default = require('./config/default');
-
-var _default2 = _interopRequireDefault(_default);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// const DB_URL = (process.env.NODE_ENV === 'prod') ?
-// config.prod.dbURL : config.dev.dbURL;
-var DB_URL = _default2.default.prod.dbURL;
-
+var DB_URL = _config2.default.get('dbURL');
 var publicPath = _path2.default.resolve('public');
 var app = (0, _express2.default)();
 
@@ -60,9 +57,6 @@ require('./passport/init')(_passport2.default);
 
 _mongoose2.default.connect(DB_URL);
 
-console.log('heroku');
-console.log('config');
-console.log(_default2.default);
 // Set up express app
 app.use((0, _morgan2.default)('dev'));
 app.use((0, _cookieParser2.default)());
@@ -82,6 +76,6 @@ app.use((0, _connectFlash2.default)());
 
 (0, _routes2.default)(app, _passport2.default);
 
-app.listen(3000, function (req, res) {
-  console.log('Messaing bot server running at port 3000.');
+app.listen(process.env.PORT || 3000, function (req, res) {
+  console.log('Messaging bot server running at port ' + (process.env.PORT || 3000));
 });
