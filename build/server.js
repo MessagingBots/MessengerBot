@@ -46,7 +46,9 @@ var _default2 = _interopRequireDefault(_default);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var DB_URL = process.env.NODE_ENV === 'prod' ? _default2.default.prod.dbURL : _default2.default.dev.dbURL;
+// const DB_URL = (process.env.NODE_ENV === 'prod') ?
+// config.prod.dbURL : config.dev.dbURL;
+var DB_URL = _default2.default.prod.dbURL;
 
 var publicPath = _path2.default.resolve('public');
 var app = (0, _express2.default)();

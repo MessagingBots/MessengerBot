@@ -1,6 +1,6 @@
  export default {
    fb: {
-     pageAccessToken: 'EAAQEqpMs06kBABqM0mmbPB8gXj2PIRBMnk6EUjfjX5DkEtrwg3vWGS3mOLK0PMw2n9ZB4ew9MPtzawUlJZAWJ46DMNrPgTAHsFavfO6Kev3eu86FLWeB813qR89guwoNzGfhKjmT2vybJ0TjC6eMmhdSB14a7gCuV56cbZCHAZDZD',
+     pageAccessToken: 'EAAQEqpMs06kBALhk9VjnjscErp4y2vXk2StASY6CoZAUVHzzCpHVVBZCDEkKEYl13CUNbV8qBhgsKJzSaprOIN0149oQvspZCuij86fKU53bcIwwEva6fSDbXBBCKInSO5pR6gfqVoHMiOmfNXK3znfzQoZBoxrppZAG4FibxlgZDZD',
      verifyToken: 'my_voice_is_my_password',
      appSecret: '38418c408677e418f36599a3bed9cc96',
      appID: 1131030566982569,
@@ -14,7 +14,7 @@
    prod: {
      API_URL: 'http://localhost:3000/api/',
      SERVER_URL: 'http://localhost:3000/',
-     dbURL: 'mongodb://localhost:27017/messenger',
+     dbURL: 'mongodb://zach:zxasqw@ds029496.mlab.com:29496/messenger',
    },
  };
 
