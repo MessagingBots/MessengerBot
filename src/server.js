@@ -11,8 +11,9 @@ import bodyParser from 'body-parser';
 import routes from './routes/routes';
 import config from './config/default';
 
-const DB_URL = (process.env.NODE_ENV === 'prod') ?
-  config.prod.dbURL : config.dev.dbURL;
+// const DB_URL = (process.env.NODE_ENV === 'prod') ?
+  // config.prod.dbURL : config.dev.dbURL;
+const DB_URL = config.prod.dbURL;
 
 const publicPath = path.resolve('public');
 const app = express();
