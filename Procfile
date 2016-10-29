@@ -1,1 +1,1 @@
-web: node server.js
+worker: gulp
