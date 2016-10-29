@@ -25,6 +25,7 @@ require('./passport/init')(passport);
 
 mongoose.connect(DB_URL);
 
+console.log('heroku');
 // Set up express app
 app.use(morgan('dev'));
 app.use(cookieParser());

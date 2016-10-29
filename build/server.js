@@ -60,6 +60,7 @@ require('./passport/init')(_passport2.default);
 
 _mongoose2.default.connect(DB_URL);
 
+console.log('heroku');
 // Set up express app
 app.use((0, _morgan2.default)('dev'));
 app.use((0, _cookieParser2.default)());
