@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import config from '../config/default';
+import config from 'config';
 
 import {
   callSendAPI, sendAccountLinking, sendTextMessage,
@@ -8,9 +8,11 @@ import {
 } from './sendUtils';
 
 const Student = require('../models/Student');
-const API_URL = (process.env.NODE_ENV === 'dev') ? config.dev.API_URL : config.prod.API_URL;
-const SERVER_URL = (process.env.NODE_ENV === 'dev') ? config.dev.SERVER_URL : config.prod.SERVER_URL;
-const APP_SECRET = config.fb.appSecret;
+
+const API_URL = config.get('API_URL');
+const SERVER_URL = config.get('SERVER_URL');
+const fbConfig = config.get('fb');
+const APP_SECRET = fbConfig.appSecret;
 
 /*
  * Verify that the callback came from Facebook. Using the App Secret from
@@ -181,7 +183,7 @@ function receivedDeliveryConfirmation(event) {
   const sequenceNumber = delivery.seq;
 
   if (messageIDs) {
-    messageIDs.forEach(function (messageID) {
+    messageIDs.forEach((messageID) => {
       console.log('Received delivery confirmation for message ID: %s',
         messageID);
     });
@@ -199,13 +201,13 @@ function receivedDeliveryConfirmation(event) {
  *
  */
 function receivedPostback(event) {
-  var senderID = event.sender.id;
-  var recipientID = event.recipient.id;
-  var timeOfPostback = event.timestamp;
+  const senderID = event.sender.id;
+  const recipientID = event.recipient.id;
+  const timeOfPostback = event.timestamp;
 
   // The 'payload' param is a developer-defined field which is set in a postback
   // button for Structured Messages.
-  var payload = event.postback.payload;
+  const payload = event.postback.payload;
 
   console.log("Received postback for user %d and page %d with payload '%s' " +
     "at %d", senderID, recipientID, payload, timeOfPostback);
@@ -223,15 +225,15 @@ function receivedPostback(event) {
  *
  */
 function receivedMessageRead(event) {
-  var senderID = event.sender.id;
-  var recipientID = event.recipient.id;
+  const senderID = event.sender.id;
+  const recipientID = event.recipient.id;
 
   // All messages before watermark (a timestamp) or sequence have been seen.
-  var watermark = event.read.watermark;
-  var sequenceNumber = event.read.seq;
+  const watermark = event.read.watermark;
+  const sequenceNumber = event.read.seq;
 
-  console.log("Received message read event for watermark %d and sequence " +
-    "number %d", watermark, sequenceNumber);
+  console.log('Received message read event for watermark %d and sequence ' +
+    'number %d', watermark, sequenceNumber);
 }
 /*
  * Account Link Event
@@ -242,24 +244,24 @@ function receivedMessageRead(event) {
  *
  */
 function receivedAccountLink(event) {
-  var senderID = event.sender.id;
-  var recipientID = event.recipient.id;
+  const senderID = event.sender.id;
+  const recipientID = event.recipient.id;
 
-  var status = event.account_linking.status;
-  var authCode = event.account_linking.authorization_code;
+  const status = event.account_linking.status;
+  const authCode = event.account_linking.authorization_code;
 
-  console.log("Received account link event with for user %d with status %s " +
-    "and auth code %s ", senderID, status, authCode);
+  console.log('Received account link event with for user %d with status %s ' +
+    'and auth code %s ', senderID, status, authCode);
 }
 
 exports.get = (req, res) => {
   if (req.query['hub.mode'] === 'subscribe' &&
-      req.query['hub.verify_token'] === config.fb.verifyToken) {
+      req.query['hub.verify_token'] === fbConfig.verifyToken) {
     console.log('Validating webhook');
     res.status(200).send(req.query['hub.challenge']);
   } else {
     console.log('your token: ');
-    console.log(config.verifyToken);
+    console.log(fbConfig.verifyToken);
     console.log('token fb sent');
     console.log(req.query['hub.verify_token']);
     console.error('Failed validation. Make sure the validation tokens match.');
@@ -271,15 +273,15 @@ exports.post = (req, res) => {
   const data = req.body;
 
   // Make sure this is a page subscription
-  if (data.object == 'page') {
+  if (data.object === 'page') {
     // Iterate over each entry
     // There may be multiple if batched
-    data.entry.forEach(function(pageEntry) {
-      var pageID = pageEntry.id;
-      var timeOfEvent = pageEntry.time;
+    data.entry.forEach((pageEntry) => {
+      const pageID = pageEntry.id;
+      const timeOfEvent = pageEntry.time;
 
       // Iterate over each messaging event
-      pageEntry.messaging.forEach(function(messagingEvent) {
+      pageEntry.messaging.forEach((messagingEvent) => {
         if (messagingEvent.optin) {
           receivedAuthentication(messagingEvent);
         } else if (messagingEvent.message) {
@@ -293,7 +295,7 @@ exports.post = (req, res) => {
         } else if (messagingEvent.account_linking) {
           receivedAccountLink(messagingEvent);
         } else {
-          console.log("Webhook received unknown messagingEvent: ", messagingEvent);
+          console.log('Webhook received unknown messagingEvent: ', messagingEvent);
         }
       });
     });

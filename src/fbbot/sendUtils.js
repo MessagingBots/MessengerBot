@@ -1,10 +1,11 @@
 import request from 'request';
-import config from '../config/default';
+import config from 'config';
 
 const Student = require('../models/Student');
 
-const API_URL = (process.env.NODE_ENV === 'prod') ? config.prod.API_URL : config.dev.API_URL;
-const SERVER_URL = (process.env.NODE_ENV === 'prod') ? config.prod.SERVER_URL : config.dev.SERVER_URL;
+const API_URL = config.get('API_URL');
+const SERVER_URL = config.get('SERVER_URL');
+const fbConfig = config.get('fb');
 
 /*
  * Call the Send API. The message data goes in the body. If successful, we'll
@@ -14,7 +15,7 @@ const SERVER_URL = (process.env.NODE_ENV === 'prod') ? config.prod.SERVER_URL : 
 function callSendAPI(messageData) {
   request({
     uri: 'https://graph.facebook.com/v2.6/me/messages',
-    qs: { access_token: config.fb.pageAccessToken },
+    qs: { access_token: fbConfig.pageAccessToken },
     method: 'POST',
     json: messageData,
 
@@ -55,7 +56,7 @@ function sendAccountLinking(recipientId) {
             image_url: `${SERVER_URL}assets/thumbsup.png`,
             buttons: [{
               type: 'account_link',
-              url: `${API_URL}auth/facebook?senderId=${recipientId}&pat=${config.fb.pageAccessToken}`,
+              url: `${API_URL}auth/facebook?senderId=${recipientId}&pat=${fbConfig.pageAccessToken}`,
             }],
           }],
         },

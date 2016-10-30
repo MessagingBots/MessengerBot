@@ -3,6 +3,6 @@
 npm-debug.log
 .DS_Store
 /*.env
-/src/config
+/config
 /build/config
 /.idea

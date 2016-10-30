@@ -1,10 +1,10 @@
 import axios from 'axios';
-import config from '../config/default';
+import config from 'config';
 
 const FacebookStrategy = require('passport-facebook').Strategy;
 const Student = require('../models/Student');
 
-const fbConfig = config.fb;
+const fbConfig = config.get('fb');
 const callbackURL = (process.env.NODE_ENV === 'prod') ?
   fbConfig.callbackURLProd : fbConfig.callbackURLDev;
 
@@ -38,7 +38,7 @@ module.exports = (passport) => {
         console.log(profile);
 
         // Request the user's Page-Scoped ID and senderID from FB so we can associate their senderID
-        axios.get(`https://graph.facebook.com/v2.6/me?access_token=${config.fb.pageAccessToken}&fields=recipient&account_linking_token=${req.session.account_linking_token}`)
+        axios.get(`https://graph.facebook.com/v2.6/me?access_token=${fbConfig.pageAccessToken}&fields=recipient&account_linking_token=${req.session.account_linking_token}`)
           .then((succ) => {
             // set all of the facebook information in our user model
             newStudent.fb.id = profile.id; // set the users facebook id

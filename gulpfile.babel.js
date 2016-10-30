@@ -1,7 +1,16 @@
 const gulp = require('gulp');
 const babel = require('gulp-babel');
 const spawn = require('child_process').spawn;
+const argv = require('yargs').argv;
+
+const isProduction = argv.prod;
 let node;
+
+if (isProduction) {
+  process.env.NODE_ENV = 'production';
+} else {
+  process.env.NODE_ENV = 'dev';
+}
 
 const paths = {
   scripts: ['server.js', './src/**/*.js'],
