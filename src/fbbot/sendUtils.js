@@ -44,6 +44,8 @@ function callSendAPI(messageData) {
  *
  */
 function sendAccountLinking(recipientId) {
+  console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``');
+  console.log(`${SERVER_URL}assets/thumbsup.png`);
   const messageData = {
     recipient: {
       id: recipientId,
