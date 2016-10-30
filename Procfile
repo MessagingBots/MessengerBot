@@ -1,1 +1,1 @@
-worker: node build/server.js
+worker: gulp build && node build/server.js
