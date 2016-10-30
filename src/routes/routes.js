@@ -1,6 +1,4 @@
 /* eslint consistent-return: "off" */
-import axios from 'axios';
-import config from '../config/default';
 import signup from './signup';
 import login from './login';
 import fbwebhook from '../fbbot/webhook';
