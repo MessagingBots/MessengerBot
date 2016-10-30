@@ -7,6 +7,7 @@
   },
   "main": "server.js",
   "scripts": {
+    "postinstall": "gulp build",
     "start:dev": "export NODE_ENV=dev && npm run start",
     "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
