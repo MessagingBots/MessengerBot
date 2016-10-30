@@ -48,6 +48,6 @@ app.use(flash());
 routes(app, passport);
 
 app.listen(process.env.PORT || 3000, (req, res) => {
-  console.log('Messaing bot server running at port 3000.')
+  console.log('Messaging bot server running at port ' + (process.env.PORT || 3000));
 });
 

@@ -254,7 +254,7 @@ function receivedAccountLink(event) {
 
 exports.get = (req, res) => {
   if (req.query['hub.mode'] === 'subscribe' &&
-      req.query['hub.verify_token'] === config.verifyToken) {
+      req.query['hub.verify_token'] === config.fb.verifyToken) {
     console.log('Validating webhook');
     res.status(200).send(req.query['hub.challenge']);
   } else {
