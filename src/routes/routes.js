@@ -86,7 +86,8 @@ module.exports = (app, passport) => {
         }
         console.log('User was logged in');
         console.log(user);
-        return res.render('success.ejs');
+        console.log('about to render success.js');
+        return res.redirect('/profile');
       });
     })(req, res, next);
   });
@@ -128,6 +129,8 @@ module.exports = (app, passport) => {
   //  - local
   app.get('/unlink/local', (req, res) => {
     const user = req.user;
+    console.log('user current is');
+    console.log(req.user);
     user.local.email = undefined;
     user.local.password = undefined;
     user.save((err) => {

@@ -19,7 +19,7 @@ module.exports = (passport) => {
     process.nextTick(() => {
 
       // // Check if a user is logged in
-      // if (!req.user) {
+      if (!req.user) {
         // find the user in the database based on their facebook id
         Student.findOne({ 'fb.id': profile.id }, (err, student) => {
 
@@ -79,23 +79,23 @@ module.exports = (passport) => {
               return done(Error);
             }); // End of axios...
         }); // End of Student.findOne(...)
-      // } else {
-      //   // User exists and is logged in, link their account
-      //   const user = req.user;
-      //   user.fb.id = profile.id; // set the users facebook id
-      //   // we will save the token that facebook provides to the user
-      //   user.fb.accessToken = accessToken;
-      //   user.fb.firstName = profile.name.givenName;
-      //   user.fb.lastName = profile.name.familyName;
-      //
-      //   user.save((err) => {
-      //     if (err) {
-      //       console.log('Error saving a linked account');
-      //       throw err;
-      //     }
-      //     return done(null, user);
-      //   });
-      // }
+      } else {
+        // User exists and is logged in, link their account
+        const user = req.user;
+        user.fb.id = profile.id; // set the users facebook id
+        // we will save the token that facebook provides to the user
+        user.fb.accessToken = accessToken;
+        user.fb.firstName = profile.name.givenName;
+        user.fb.lastName = profile.name.familyName;
+
+        user.save((err) => {
+          if (err) {
+            console.log('Error saving a linked account');
+            throw err;
+          }
+          return done(null, user, { connectedAccount: true });
+        });
+      }
     });
   }));
 };
