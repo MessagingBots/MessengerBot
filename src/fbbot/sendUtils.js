@@ -110,18 +110,25 @@ function sendCourses(recipientId) {
           .then((succ) => {
             const courses = succ.data;
             courses.forEach((course) => {
-              console.log(course.name);
               if (!course.name) {
                 course.name = ' ';
               }
+              const courseURL = `https://ufl.instructure.com/courses/${course.id}`;
               messageData.message.attachment.payload.elements.push({
                 title: course.name,
                 image_url: `${SERVER_URL}assets/thumbsup.png`,
-                buttons: [{
-                  title: 'View Course',
-                  type: 'web_url',
-                  url: 'google.com',
-                }],
+                buttons: [
+                  {
+                    title: 'Open Course',
+                    type: 'web_url',
+                    url: courseURL,
+                  },
+                  {
+                    title: 'View Assignments',
+                    type: 'web_url',
+                    url: `${courseURL}/assignments`,
+                  },
+                ],
               });
             });
             callSendAPI(messageData);
