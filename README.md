@@ -11,18 +11,18 @@ Run `npm install --save json5` to be able to create .json5 files, then create a 
 
 These files contain the same JSON5 structure:
 
-`{
-  fb: {
-    pageAccessToken: 'YOUR_PAGE_ACCESS_TOKEN',
-    verifyToken: 'YOUR_APP_WEBHOOK_VERIFY_TOKEN',
-    appSecret: 'YOUR_APP_SECRET',
-    appID: YOUR_APP_ID,
-    callbackURL: 'YOUR_FB_APP_MESSENGER_CALLBACK_URL',
-  },
-  API_URL: 'http://localhost:3000/api/',
-  SERVER_URL: 'http://localhost:3000/',
-  dbURL: 'mongodb://localhost:27017/messenger',
-}`
+    {
+      fb: {
+        pageAccessToken: 'YOUR_PAGE_ACCESS_TOKEN',
+        verifyToken: 'YOUR_APP_WEBHOOK_VERIFY_TOKEN',
+        appSecret: 'YOUR_APP_SECRET',
+        appID: YOUR_APP_ID,
+        callbackURL: 'YOUR_FB_APP_MESSENGER_CALLBACK_URL',
+      },
+      API_URL: 'http://localhost:3000/api/',
+      SERVER_URL: 'http://localhost:3000/',
+      dbURL: 'mongodb://localhost:27017/messenger',
+    }
 
 The point of each is to hold the respective information for your development and production environments.
 
