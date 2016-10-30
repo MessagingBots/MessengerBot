@@ -4,9 +4,9 @@ import axios from 'axios';
 
 const Student = require('../models/Student');
 
-const API_URL = config.API_URL;
+const API_URL = (process.env.API_URL) ? process.env.API_URL : config.API_URL;
 const CANVAS_API = config.CANVAS_API;
-const SERVER_URL = config.SERVER_URL;
+const SERVER_URL = (process.env.SERVER_URL) ? process.env.SERVER_URL : config.SERVER_URL;
 const fbConfig = config.fb;
 
 /*

@@ -6,7 +6,7 @@ const FacebookStrategy = require('passport-facebook').Strategy;
 const Student = require('../models/Student');
 
 const fbConfig = config.fb;
-const callbackURL = fbConfig.callbackURL;
+const callbackURL = (process.env.fbcallBackURL) ? process.env.fbcallbackURL : fbConfig.callbackURL;
 
 module.exports = (passport) => {
   passport.use('facebook', new FacebookStrategy({
