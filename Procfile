@@ -1,1 +1,1 @@
-worker: gulp --production
+web: gulp --production
