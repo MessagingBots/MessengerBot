@@ -3,7 +3,7 @@ const babel = require('gulp-babel');
 const spawn = require('child_process').spawn;
 const argv = require('yargs').argv;
 
-const isProduction = argv.prod;
+const isProduction = argv.production;
 let node;
 
 if (isProduction) {
