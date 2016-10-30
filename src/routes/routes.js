@@ -15,7 +15,7 @@ function isLoggedIn(req, res, next) {
 
 module.exports = (app, passport) => {
   app.get('/', (req, res) => {
-    res.redirect('/profile');
+    res.render('index.ejs');
   });
 
   app.get('/login', login.get);
@@ -68,20 +68,25 @@ module.exports = (app, passport) => {
       if (err) {
         return next(err);
       }
-
       if (!user) {
         return res.send({
           error: 'user not found',
         });
       }
-
       req.login(user, (loginErr) => {
         if (loginErr) {
           return next(err);
         }
+        // Is this the first time a user is linking their account?
+        //  If so, redirect to the redirectURI so FB can let our bot know
+        if (info.accountLinkingRedirect) {
+          console.log('info was');
+          console.log(info);
+          return res.redirect(`${req.session.redirectURI}&authorization_code=${req.session.authCode}`);
+        }
         console.log('User was logged in');
         console.log(user);
-        return res.redirect(`${req.session.redirectURI}&authorization_code=${req.session.authCode}`);
+        return res.render('success.ejs');
       });
     })(req, res, next);
   });
@@ -89,4 +94,61 @@ module.exports = (app, passport) => {
   // Routes for the FB messenger bot webhook
   app.get('/fbbot/webhook', fbwebhook.get);
   app.post('/fbbot/webhook', fbwebhook.post);
+
+  /** --------------------
+   ** Linking accounts
+   ** --------------------
+  **/
+  //  - local
+  app.get('/connect/local', (req, res) => {
+    res.render('connect-local.ejs', { message: req.flash('loginMessage') });
+  });
+
+  app.post('/connect/local', passport.authenticate('local-signup', {
+    successRedirect: '/profile',
+    failureRedirect: '/connect/local',
+    failureFlash: true,
+  }));
+
+  // Facebook
+  app.get('/connect/facebook', passport.authorize('facebook', {
+    scope: ['email', 'public_profile'],
+  }));
+
+  app.get('/connect/facebook/callback',
+    passport.authorize('facebook', {
+      successRedirect: '/profile',
+      failureRedirect: '/login',
+    }));
+
+  /** --------------------
+   ** Unlinking accounts
+   ** --------------------
+  **/
+  //  - local
+  app.get('/unlink/local', (req, res) => {
+    const user = req.user;
+    user.local.email = undefined;
+    user.local.password = undefined;
+    user.save((err) => {
+      if (err) {
+        console.log('Error unlinking local account')
+        throw err;
+      }
+      res.redirect('/profile');
+    });
+  });
+
+  //  - Facebook
+  app.get('/unlink/facebook', (req, res) => {
+    const user = req.user;
+    user.fb.accessToken = undefined;
+    user.save((err) => {
+      if (err) {
+        console.log('Error unlinking local account')
+        throw err;
+      }
+      res.redirect('/profile');
+    });
+  });
 };

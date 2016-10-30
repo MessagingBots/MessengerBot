@@ -1,9 +1,11 @@
 import request from 'request';
 import config from 'config';
+import axios from 'axios';
 
 const Student = require('../models/Student');
 
 const API_URL = config.get('API_URL');
+const CANVAS_API = config.get('CANVAS_API');
 const SERVER_URL = config.get('SERVER_URL');
 const fbConfig = config.get('fb');
 
@@ -91,40 +93,61 @@ function sendCourses(recipientId) {
     if (user) {
       console.log('user found');
       console.log(user);
-      if (user.canvas && user.canvas.courses) {
-        console.log('user canvas');
-        console.log(user);
-        const courses = user.canvas.courses;
-        courses.forEach((course) => {
-          messageData.message.attachment.payload.elements.push({
-            title: course.title,
-            image_url: course.imgURL,
-            buttons: [{
-              title: 'View Course',
-              type: 'web_url',
-              url: 'google.com',
-            }],
+
+      if (user.canvas) {
+        const axiosOptions = {
+          url: `${CANVAS_API}courses`,
+          headers: {
+            Authorization: `Bearer ${user.canvas.token}`,
+          },
+          params: {
+            enrollment_state: 'active',
+          },
+        };
+        console.log('optiopns');
+        console.log(axiosOptions);
+        axios.request(axiosOptions)
+          .then((succ) => {
+            const courses = succ.data;
+            courses.forEach((course) => {
+              console.log(course.name);
+              if (!course.name) {
+                course.name = ' ';
+              }
+              messageData.message.attachment.payload.elements.push({
+                title: course.name,
+                image_url: `${SERVER_URL}assets/thumbsup.png`,
+                buttons: [{
+                  title: 'View Course',
+                  type: 'web_url',
+                  url: 'google.com',
+                }],
+              });
+            });
+            callSendAPI(messageData);
+          })
+          .catch((error) => {
+            console.log('ERROR receiving courses');
+            console.log(error);
+            messageData.message.attachment.payload.elements.push({
+              title: 'You have no courses!',
+              image_url: `${SERVER_URL}assets/thumbsdown.png`,
+            });
           });
-        });
       } else {
-        console.log('no canvas courses');
-        console.log('before');
-        console.log(messageData.message.attachment.payload.elements);
         messageData.message.attachment.payload.elements.push({
           title: 'You have no courses!',
           image_url: `${SERVER_URL}assets/thumbsdown.png`,
         });
-        console.log('after');
-        console.log(messageData.message.attachment.payload.elements);
+        callSendAPI(messageData);
       }
     } else {
       messageData.message.attachment.payload.elements.push({
         title: 'You have no courses!',
         image_url: `${SERVER_URL}assets/thumbsdown.png`,
       });
+      callSendAPI(messageData);
     }
-
-    callSendAPI(messageData);
   });
 }
 

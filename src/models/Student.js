@@ -8,7 +8,7 @@ let StudentSchema = new mongoose.Schema({
     password: String,
   },
   canvas: {
-
+    token: String,
   },
   fb: {
     id: String,
