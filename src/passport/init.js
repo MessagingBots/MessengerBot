@@ -38,21 +38,39 @@ module.exports = (passport) => {
           return done(null, false, req.flash('signupMessage', 'That email is already taken.'));
         }
 
-        // if there is no user with that email
-        // create the user
-        const newUser = new Student();
+        console.log('~~~~~~~~~~~~~~~~~~~``');
 
-        // set the user's local credentials
-        newUser.local.email = email;
-        newUser.local.password = newUser.generateHash(password);
+        // Are we logged in? Connect a new account
+        if (req.user) {
+          console.log('req user exists');
+          console.log(req.user);
+          const newAccount = req.user;
+          newAccount.local.email = email;
+          newAccount.local.password = newAccount.generateHash(password);
+          newAccount.save((error) => {
+            if (error) {
+              console.log('Error connecting new local account');
+              throw error;
+            }
+            return done(null, newAccount);
+          });
+        } else {
+          // If there is no user with that email and we aren't connecting,
+          //  create the user
+          const newUser = new Student();
 
-        // save the user
-        newUser.save((error) => {
-          if (error) {
-            throw error;
-          }
-          return done(null, newUser);
-        });
+          // set the user's local credentials
+          newUser.local.email = email;
+          newUser.local.password = newUser.generateHash(password);
+
+          // save the user
+          newUser.save((error) => {
+            if (error) {
+              throw error;
+            }
+            return done(null, newUser);
+          });
+        }
       });
     });
   }));

@@ -12,8 +12,8 @@
 <div class="container">
 
     <div class="page-header text-center">
-      <h1><span class="fa fa-anchor"></span> Profile Page</h1>
-      <a href="/logout" class="btn btn-default btn-sm">Logout</a>
+        <h1><span class="fa fa-anchor"></span> Profile Page</h1>
+        <a href="/logout" class="btn btn-default btn-sm">Logout</a>
     </div>
 
     <div class="row">
@@ -23,17 +23,57 @@
             <div class="well">
                 <h3><span class="fa fa-user"></span> Local</h3>
 
+                <% if (user.local.email) { %>
                     <p>
                         <strong>id</strong>: <%= user._id %><br>
                         <strong>email</strong>: <%= user.local.email %><br>
                         <strong>password</strong>: <%= user.local.password %>
                     </p>
 
+                    <a href="/unlink/local" class="btn btn-default">Unlink</a>
+                <% } else { %>
+                    <a href="/connect/local" class="btn btn-default">Connect Local</a>
+                <% } %>
+
             </div>
         </div>
 
-    </div>
+        <!-- FACEBOOK INFORMATION -->
+        <div class="col-sm-6">
+            <div class="well">
+                <h3 class="text-primary"><span class="fa fa-facebook"></span> Facebook</h3>
 
-</div>
-</body>
-</html>
+                <!-- check if the user has this token (is the user authenticated with this social account) -->
+                  <% if (user.fb.accessToken) { %>
+                    <p>
+                        <strong>id</strong>: <%= user.fb.id %><br>
+                        <strong>accessToken</strong>: <%= user.fb.accessToken %><br>
+                        <strong>email</strong>: <%= user.fb.email %><br>
+                        <strong>name</strong>: <%= user.fb.firstName %> <%= user.fb.lastName %><br>
+                    </p>
+
+                    <a href="/unlink/facebook" class="btn btn-primary">Unlink</a>
+                <% } else { %>
+                    <a href="/connect/facebook" class="btn btn-primary">Connect Facebook</a>
+                <% } %>
+
+            </div>
+        </div>
+
+        <!-- CANVAS INFORMATION -->
+        <div class="col-sm-6">
+            <div class="well">
+                <h3 class="text-primary"><span class="fa fa-canvas"></span> Canvas</h3>
+
+                <!-- check if the user has this token (is the user authenticated with this social account) -->
+                  <% if (user.canvas.token) { %>
+                    <p>
+                        <strong>token</strong>: <%= user.canvas.token %><br>
+                    </p>
+                <% } else { %>
+
+                <% } %>
+
+            </div>
+        </div>
+    </div>
