@@ -1,13 +1,13 @@
 import request from 'request';
-import config from 'config';
+import config from 'config-heroku';
 import axios from 'axios';
 
 const Student = require('../models/Student');
 
-const API_URL = config.get('API_URL');
-const CANVAS_API = config.get('CANVAS_API');
-const SERVER_URL = config.get('SERVER_URL');
-const fbConfig = config.get('fb');
+const API_URL = config.API_URL;
+const CANVAS_API = config.CANVAS_API;
+const SERVER_URL = config.SERVER_URL;
+const fbConfig = config.fb;
 
 /*
  * Call the Send API. The message data goes in the body. If successful, we'll

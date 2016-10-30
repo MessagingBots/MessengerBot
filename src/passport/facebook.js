@@ -1,11 +1,11 @@
 import axios from 'axios';
-import config from 'config';
+import config from 'config-heroku';
 import fs from 'fs';
 
 const FacebookStrategy = require('passport-facebook').Strategy;
 const Student = require('../models/Student');
 
-const fbConfig = config.get('fb');
+const fbConfig = config.fb;
 const callbackURL = fbConfig.callbackURL;
 
 module.exports = (passport) => {

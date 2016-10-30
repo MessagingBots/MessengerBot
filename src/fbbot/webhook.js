@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import config from 'config';
+import config from 'config-heroku';
 
 import {
   callSendAPI, sendAccountLinking, sendTextMessage,
@@ -9,9 +9,9 @@ import {
 
 const Student = require('../models/Student');
 
-const API_URL = config.get('API_URL');
-const SERVER_URL = config.get('SERVER_URL');
-const fbConfig = config.get('fb');
+const API_URL = config.API_URL;
+const SERVER_URL = config.SERVER_URL;
+const fbConfig = config.fb;
 const APP_SECRET = fbConfig.appSecret;
 
 /*
