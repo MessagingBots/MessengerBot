@@ -1,1 +1,1 @@
-worker: node server.js
+worker: gulp --production
