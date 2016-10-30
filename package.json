@@ -1,36 +1,48 @@
 {
   "name": "Messenger-Bot",
-  "version": "0.0.1",
-  "description": "Facebook Messenger personal assistant bot for UF students.",
+  "version": "1.0.0",
+  "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "nodemon server",
-    "build:prod": "NODE_ENV=production webpack -p --config webpack.prod.config.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "node deploy",
-    "lint": "jshint --exclude node_modules ."
+    "start:dev": "export NODE_ENV=dev && npm run start",
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Ervis Shqiponja, Zach Schultz, Denzel Mathew",
-  "license": "BSD-2-Clause",
-  "dependencies": {
-    "body-parser": "^1.15.0",
-    "config": "^1.20.4",
-    "ejs": "^2.4.2",
-    "express": "^4.13.4",
-    "node-wit": "^4.1.0",
-    "nodemon": "^1.10.2",
-    "request": "^2.72.0"
-  },
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
     "babel-core": "^6.14.0",
-    "babel-loader": "^6.2.5",
+    "babel-plugin-transform-object-rest-spread": "^6.8.0",
     "babel-preset-es2015": "^6.14.0",
-    "babel-preset-stage-0": "^6.5.0",
-    "http-proxy": "^1.14.0",
-    "webpack": "^1.13.2",
-    "webpack-dev-server": "^1.15.1"
+    "eslint": "^3.8.1",
+    "eslint-config-airbnb": "^12.0.0",
+    "eslint-plugin-import": "^2.0.1",
+    "eslint-plugin-jsx-a11y": "^2.2.3",
+    "eslint-plugin-react": "^6.4.1",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
+    "yargs": "^6.3.0"
   },
-  "engines": {
-    "node": "~4.1.2"
+  "dependencies": {
+    "axios": "^0.15.2",
+    "bcrypt-nodejs": "0.0.3",
+    "body-parser": "^1.15.2",
+    "config": "^1.21.0",
+    "connect-flash": "^0.1.1",
+    "cookie-parser": "^1.4.3",
+    "crypto": "0.0.3",
+    "ejs": "^2.5.2",
+    "express": "^4.14.0",
+    "express-session": "^1.14.1",
+    "http": "0.0.0",
+    "http-proxy": "^1.15.2",
+    "https": "^1.0.0",
+    "json5": "^0.5.0",
+    "mongoose": "^4.6.5",
+    "morgan": "^1.7.0",
+    "passport": "^0.3.2",
+    "passport-facebook": "^2.1.1",
+    "passport-local": "^1.0.0",
+    "request": "^2.76.0"
   }
 }
