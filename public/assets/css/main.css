@@ -1,0 +1,13 @@
+.canvas {
+  color: #dd661e;
+}
+
+.canvas:hover {
+  color: #b65318
+}
+
+.btn-canvas {
+  color: #ffffff;
+  background-color: #dd661e;
+  border-color: #cd5f1c;
+}

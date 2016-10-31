@@ -1,9 +1,8 @@
 <!doctype html>
 <html>
 <head>
-    <title>Node Authentication</title>
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+    <% include partials/common_title.ejs %>
+    <% include partials/common_css.ejs %>
     <style>
         body        { padding-top:80px; }
     </style>
@@ -18,8 +17,8 @@
 
         <a href="/login" class="btn btn-default"><span class="fa fa-user"></span> Local Login</a>
         <a href="/signup" class="btn btn-default"><span class="fa fa-user"></span> Local Signup</a>
-        <!-- <a href="/api/auth/facebook" class="btn btn-primary"><span class="fa fa-facebook"></span> Facebook</a> -->
-        <a disabled href="/api/auth/canvas" class="btn btn-primary"><span class="fa fa-user"></span> Canvas</a>
+        <a href="/api/auth/facebook" class="btn btn-primary"><span class="fa fa-facebook"></span> Facebook</a>
+        <a disabled href="/api/auth/canvas" class="btn btn-canvas"><span class="fa fa-graduation-cap"></span> Canvas</a>
     </div>
 </div>
 </body>
