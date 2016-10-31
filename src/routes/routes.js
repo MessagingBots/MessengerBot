@@ -56,6 +56,9 @@ module.exports = (app, passport) => {
     // let redirectURISuccess = redirectURI + "&authorization_code=" + authCode;
     req.session.redirectURI = req.query.redirect_uri;
     req.session.authCode = authCode;
+    console.log('~~~~~~~~~~~~~~~~~~``');
+    console.log('REDIRECT URI');
+    console.log(req.session.redirectURI);
     passport.authenticate('facebook', {
       scope: ['email', 'public_profile'],
     })(req, res, next);
@@ -79,6 +82,10 @@ module.exports = (app, passport) => {
         }
         // Is this the first time a user is linking their account?
         //  If so, redirect to the redirectURI so FB can let our bot know
+
+        console.log('~~~~~~~~~~~~~~~~~~``');
+        console.log('REDIRECT URI');
+        console.log(req.session.redirectURI);
         if (info.accountLinkingRedirect) {
           console.log('info was');
           console.log(info);
