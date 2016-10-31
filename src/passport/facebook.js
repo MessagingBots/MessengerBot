@@ -80,6 +80,9 @@ module.exports = (passport) => {
             }); // End of axios...
         }); // End of Student.findOne(...)
       } else {
+        console.log('DOWN HERE LINKING ACCOUNT');
+        console.log('redirect ur');
+        console.log(req.session.redirectURI);
         // User exists and is logged in, link their account
         const user = req.user;
         user.fb.id = profile.id; // set the users facebook id
@@ -93,7 +96,12 @@ module.exports = (passport) => {
             console.log('Error saving a linked account');
             throw err;
           }
-          return done(null, user, { connectedAccount: true });
+          if (req.session.redirectURI) {
+            req.session.redirectURI = '';
+            return done(null, user, { accountLinkingRedirect: true });
+          } else {
+            return done(null, user, { connectedAccount: true });
+          }
         });
       }
     });
