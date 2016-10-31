@@ -119,9 +119,13 @@ module.exports = (app, passport) => {
   }));
 
   // Facebook
-  app.get('/connect/facebook', passport.authorize('facebook', {
-    scope: ['email', 'public_profile'],
-  }));
+  app.get('/connect/facebook', (req, res, next) => {
+    // Clear redirectURI so app doesn't think we're linking messenger
+    req.session.redirectURI = '';
+    passport.authorize('facebook', {
+      scope: ['email', 'public_profile'],
+    })(req, res, next);
+  });
 
   app.get('/connect/facebook/callback',
     passport.authorize('facebook', {
