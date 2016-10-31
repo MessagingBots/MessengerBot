@@ -9,8 +9,8 @@ import {
 
 const Student = require('../models/Student');
 
-const API_URL = (process.env.API_URL) ? process.env.API_URL : config.API_URL;
-const SERVER_URL = (process.env.SERVER_URL) ? process.env.SERVER_URL : config.SERVER_URL;
+const API_URL = config.API_URL;
+const SERVER_URL = config.SERVER_URL;
 const fbConfig = config.fb;
 const APP_SECRET = fbConfig.appSecret;
 
