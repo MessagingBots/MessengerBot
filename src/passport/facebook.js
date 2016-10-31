@@ -100,7 +100,7 @@ module.exports = (passport) => {
             console.log('Error saving a linked account');
             throw err;
           }
-          if (req.session.redirectURI) {
+          if (req.session.redirectURI.length > 0) {
             req.session.redirectURI = '';
             return done(null, user, { accountLinkingRedirect: true });
           } else {
