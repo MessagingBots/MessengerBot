@@ -6,7 +6,7 @@ const FacebookStrategy = require('passport-facebook').Strategy;
 const Student = require('../models/Student');
 
 const fbConfig = config.fb;
-const callbackURL = (process.env.fbcallBackURL) ? process.env.fbcallbackURL : fbConfig.callbackURL;
+const callbackURL = (process.env.fbcallbackURL) ? process.env.fbcallbackURL : fbConfig.callbackURL;
 
 console.log('CALLBACK URL IS');
 console.log(callbackURL);
