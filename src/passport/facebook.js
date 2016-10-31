@@ -1,6 +1,5 @@
 import axios from 'axios';
 import config from 'config-heroku';
-import fs from 'fs';
 
 const FacebookStrategy = require('passport-facebook').Strategy;
 const Student = require('../models/Student');
@@ -8,8 +7,6 @@ const Student = require('../models/Student');
 const fbConfig = config.fb;
 const callbackURL = fbConfig.callbackURL;
 
-console.log('CALLBACK URL IS');
-console.log(callbackURL);
 module.exports = (passport) => {
   console.log('CALLBACK URL IS');
   console.log(callbackURL);
@@ -21,8 +18,7 @@ module.exports = (passport) => {
     profileFields: ['id', 'emails', 'name'],
   }, (req, accessToken, refreshToken, profile, done) => {
     process.nextTick(() => {
-
-      // // Check if a user is logged in
+      // Check if a user is logged in
       if (!req.user) {
         // find the user in the database based on their facebook id
         Student.findOne({ 'fb.id': profile.id }, (err, student) => {
@@ -40,16 +36,15 @@ module.exports = (passport) => {
 
           // if there is no user found with that facebook id, create them
           const newStudent = new Student();
-          let senderID = '';
-
           console.log('Attempting to create new student from profile: ');
           console.log(profile);
 
-          // Request the user's Page-Scoped ID and senderID from FB so we can associate their senderID
+          // Request the user's Page-Scoped ID and senderID from FB so we
+          //  can associate their senderID
           axios.get(`https://graph.facebook.com/v2.6/me?access_token=${fbConfig.pageAccessToken}&fields=recipient&account_linking_token=${req.session.account_linking_token}`)
             .then((succ) => {
               // set all of the facebook information in our user model
-              newStudent.fb.id = profile.id; // set the users facebook id
+              newStudent.fb.id = profile.id;
               // we will save the token that facebook provides to the user
               newStudent.fb.accessToken = accessToken;
               newStudent.fb.firstName = profile.name.givenName;
@@ -105,9 +100,9 @@ module.exports = (passport) => {
             console.log(req.session.redirectURI);
             req.session.redirectURI = '';
             return done(null, user, { accountLinkingRedirect: true });
-          } else {
-            return done(null, user, { connectedAccount: true });
           }
+
+          return done(null, user, { connectedAccount: true });
         });
       }
     });
