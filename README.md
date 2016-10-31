@@ -6,13 +6,13 @@ Messenger bots and API
 ## Config
 We use [config-heroku](https://www.npmjs.com/package/config-heroku) on top of [node-config](https://www.npmjs.com/package/config) to deploy our local config to heroku
 
-1. npm install --save node-config config-heroku
+1. Run `npm install --save node-config config-heroku` to get the needed packages
 2. Create a `config` directory, with `default.json`, `dev.json` and `heroku.json`
-3. Common config, like Facebook app info will go in `default.json`, config for your local development
-should go in `dev.json`, and config for production will go in `heroku.json`
+3. Common config, like Facebook app (not including `callbackURL`) info will go in `default.json`, config for your local development should go in `dev.json`, and config for production will
+go in `heroku.json`
 4. After changing your config, run `config-heroku save` to deploy it to Heroku
-5. Alternatively, you can run `config-heroku hook add heroku HEROKU_CONFIG <YOUR APP NAME HERE>`
-to create a git hook that will auto-update your HEROKU_CONFIG file on Heroku when you make a commit
+* Alternatively, you can run `config-heroku hook add heroku HEROKU_CONFIG <YOUR APP NAME HERE>`
+to create a git hook that will auto-update your `HEROKU_CONFIG` file on Heroku when you make a commit
 6. To use config in your code, import it normally, like `import config from 'config-heroku'`, and access
 it like you would a normal config.json file, i.e. `config.PROPERTY_NAME`
 
