@@ -3,7 +3,7 @@ const babel = require('gulp-babel');
 const spawn = require('child_process').spawn;
 const argv = require('yargs').argv;
 
-const isProduction = argv.prod;
+const isProduction = argv.production;
 let node;
 
 if (isProduction) {
@@ -16,11 +16,11 @@ const paths = {
   scripts: ['server.js', './src/**/*.js'],
 };
 
-gulp.task('build', () => {
-  return gulp.src(paths.scripts)
+gulp.task('build', () =>
+  gulp.src(paths.scripts)
     .pipe(babel())
-    .pipe(gulp.dest('build'));
-});
+    .pipe(gulp.dest('build'))
+);
 
 gulp.task('server', ['build'], () => {
   // https://gist.github.com/webdesserts/5632955#file-gulpfile-js-L9

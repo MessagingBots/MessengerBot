@@ -7,11 +7,14 @@ import passport from 'passport';
 import session from 'express-session';
 import flash from 'connect-flash';
 import bodyParser from 'body-parser';
-import config from 'config';
+import config from 'config-heroku';
 
 import routes from './routes/routes';
 
-const DB_URL = config.get('dbURL');
+console.log('CONFIG IS');
+console.log(config);
+
+const DB_URL = config.dbURL;
 const publicPath = path.resolve('public');
 const app = express();
 
@@ -44,4 +47,3 @@ routes(app, passport);
 app.listen(process.env.PORT || 3000, (req, res) => {
   console.log('Messaging bot server running at port ' + (process.env.PORT || 3000));
 });
-

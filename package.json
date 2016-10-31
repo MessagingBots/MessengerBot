@@ -2,6 +2,9 @@
   "name": "Messenger-Bot",
   "version": "1.0.0",
   "description": "",
+  "engines": {
+    "node": "6.9.1"
+  },
   "main": "server.js",
   "scripts": {
     "start:dev": "export NODE_ENV=dev && npm run start",
@@ -25,15 +28,21 @@
   },
   "dependencies": {
     "axios": "^0.15.2",
+    "babel-core": "^6.14.0",
+    "babel-plugin-transform-object-rest-spread": "^6.8.0",
+    "babel-preset-es2015": "^6.14.0",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.15.2",
     "config": "^1.21.0",
+    "config-heroku": "^0.1.1-a",
     "connect-flash": "^0.1.1",
     "cookie-parser": "^1.4.3",
     "crypto": "0.0.3",
     "ejs": "^2.5.2",
     "express": "^4.14.0",
     "express-session": "^1.14.1",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
     "http": "0.0.0",
     "http-proxy": "^1.15.2",
     "https": "^1.0.0",
@@ -43,6 +52,7 @@
     "passport": "^0.3.2",
     "passport-facebook": "^2.1.1",
     "passport-local": "^1.0.0",
-    "request": "^2.76.0"
+    "request": "^2.76.0",
+    "yargs": "^6.3.0"
   }
 }

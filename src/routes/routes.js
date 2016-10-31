@@ -56,6 +56,9 @@ module.exports = (app, passport) => {
     // let redirectURISuccess = redirectURI + "&authorization_code=" + authCode;
     req.session.redirectURI = req.query.redirect_uri;
     req.session.authCode = authCode;
+    console.log('~~~~~~~~~~~~~~~~~~``');
+    console.log('REDIRECT URI');
+    console.log(req.session.redirectURI);
     passport.authenticate('facebook', {
       scope: ['email', 'public_profile'],
     })(req, res, next);
@@ -79,6 +82,10 @@ module.exports = (app, passport) => {
         }
         // Is this the first time a user is linking their account?
         //  If so, redirect to the redirectURI so FB can let our bot know
+
+        console.log('~~~~~~~~~~~~~~~~~~``');
+        console.log('REDIRECT URI');
+        console.log(req.session.redirectURI);
         if (info.accountLinkingRedirect) {
           console.log('info was');
           console.log(info);
@@ -86,7 +93,8 @@ module.exports = (app, passport) => {
         }
         console.log('User was logged in');
         console.log(user);
-        return res.render('success.ejs');
+        console.log('about to render success.js');
+        return res.redirect('/profile');
       });
     })(req, res, next);
   });
@@ -111,9 +119,13 @@ module.exports = (app, passport) => {
   }));
 
   // Facebook
-  app.get('/connect/facebook', passport.authorize('facebook', {
-    scope: ['email', 'public_profile'],
-  }));
+  app.get('/connect/facebook', (req, res, next) => {
+    // Clear redirectURI so app doesn't think we're linking messenger
+    req.session.redirectURI = '';
+    passport.authorize('facebook', {
+      scope: ['email', 'public_profile'],
+    })(req, res, next);
+  });
 
   app.get('/connect/facebook/callback',
     passport.authorize('facebook', {
@@ -128,6 +140,8 @@ module.exports = (app, passport) => {
   //  - local
   app.get('/unlink/local', (req, res) => {
     const user = req.user;
+    console.log('user current is');
+    console.log(req.user);
     user.local.email = undefined;
     user.local.password = undefined;
     user.save((err) => {
