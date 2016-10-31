@@ -101,6 +101,8 @@ module.exports = (passport) => {
             throw err;
           }
           if (req.session.redirectURI.length > 0) {
+            console.log('req.session.redirectURI');
+            console.log(req.session.redirectURI);
             req.session.redirectURI = '';
             return done(null, user, { accountLinkingRedirect: true });
           } else {
