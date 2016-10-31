@@ -4,27 +4,40 @@ Messenger bots and API
 # Instructions
 
 ## Config
-Run `npm install --save json5` to be able to create .json5 files, then create a config directory with two files:
+We use [config-heroku](https://www.npmjs.com/package/config-heroku) on top of [node-config](https://www.npmjs.com/package/config) to deploy our local config to heroku
 
-* `dev.json5`
-* `production.json5`
+1. npm install --save node-config config-heroku
+2. Create a `config` directory, with `default.json`, `dev.json` and `heroku.json`
+3. Common config, like Facebook app info will go in `default.json`, config for your local development
+should go in `dev.json`, and config for production will go in `heroku.json`
+4. After changing your config, run `config-heroku save` to deploy it to Heroku
+5. Alternatively, you can run `config-heroku hook add heroku HEROKU_CONFIG <YOUR APP NAME HERE>`
+to create a git hook that will auto-update your HEROKU_CONFIG file on Heroku when you make a commit
+6. To use config in your code, import it normally, like `import config from 'config-heroku'`, and access
+it like you would a normal config.json file, i.e. `config.PROPERTY_NAME`
 
-These files contain the same JSON5 structure:
+Our `default.json` looks like:
 
     {
-      fb: {
-        pageAccessToken: 'YOUR_PAGE_ACCESS_TOKEN',
-        verifyToken: 'YOUR_APP_WEBHOOK_VERIFY_TOKEN',
-        appSecret: 'YOUR_APP_SECRET',
-        appID: YOUR_APP_ID,
-        callbackURL: 'YOUR_FB_APP_MESSENGER_CALLBACK_URL',
+      "fb": {
+        "pageAccessToken": "YOUR_PAGE_ACCESS_TOKEN",
+        "verifyToken": 'YOUR_APP_WEBHOOK_VERIFY_TOKEN",
+        "appSecret": "YOUR_APP_SECRET",
+        "appID": YOUR_APP_ID,
+        "callbackURL": "YOUR_FB_APP_MESSENGER_CALLBACK_URL"
       },
-      API_URL: 'http://localhost:3000/api/',
-      SERVER_URL: 'http://localhost:3000/',
-      dbURL: 'mongodb://localhost:27017/messenger',
+      "dbURL": "mongodb://localhost:27017/messenger"
     }
 
-The point of each is to hold the respective information for your development and production environments.
+`heroku.json` should have deployment-specifig config like:
+
+    {
+      "fb": {
+        "callbackURL": "HEROKU_BASED_FB_APP_MESSENGER_CALLBACK"
+      },
+      "API_URL": "HEROKU_APP_URL/api/",
+      "SERVER_URL": "HEROKU_APP_URL",
+    }
 
 ## Development
 To run the app in a dev environment:
@@ -34,6 +47,6 @@ To run the app in a dev environment:
 ## Production
 To run in a production environment:
 
-* run `gulp --prod`
+* run `gulp --production`
 
 `gulp` will create a `build` directory with the transpiled JS and also run a watch server to re-build any time you make changes to your files
