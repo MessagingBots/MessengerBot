@@ -8,11 +8,15 @@ const Student = require('../models/Student');
 const fbConfig = config.fb;
 const callbackURL = (process.env.fbcallBackURL) ? process.env.fbcallbackURL : fbConfig.callbackURL;
 
+console.log('CALLBACK URL IS');
+console.log(callbackURL);
 module.exports = (passport) => {
+  console.log('CALLBACK URL IS');
+  console.log(callbackURL);
   passport.use('facebook', new FacebookStrategy({
     clientID: fbConfig.appID,
     clientSecret: fbConfig.appSecret,
-    callbackURL,
+    callbackURL: callbackURL,
     passReqToCallback: true,
     profileFields: ['id', 'emails', 'name'],
   }, (req, accessToken, refreshToken, profile, done) => {
