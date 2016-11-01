@@ -50,3 +50,23 @@ To run in a production environment:
 * run `gulp --production`
 
 `gulp` will create a `build` directory with the transpiled JS and also run a watch server to re-build any time you make changes to your files
+
+# Documentation
+
+```
+MessengerBot
+│   README.md
+│   server.js - imports and runs the build/server.js file (entry to the app)    
+│   Procfile - Heroku will run this
+│   gulpfile.babel.js - Contains code for gulp command
+│   .babelrc - Used by Babel to give us the good stuff (ES6)
+└───public
+│   └───assets - images, css files, etc.
+│   └───views - .ejs template files
+└───src
+│   └───db - code for MongoDB (Monk, Schema, etc.)
+│   └───fbbot - All code related to Facebook Messenger Botkit app
+│   └───passport - Strategies for authentication and account creation
+│   └───routes - Routing of the main app
+...
+```

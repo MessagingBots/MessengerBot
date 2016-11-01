@@ -36,11 +36,31 @@ request.post(`https://graph.facebook.com/me/subscribed_apps?access_token=${acces
   }
 );
 
+// Create greeting message
+request({
+  url: 'https://graph.facebook.com/v2.6/me/thread_settings',
+  qs: { access_token },
+  method: 'POST',
+  json: {
+    setting_type: 'greeting',
+    greeting: {
+      text: 'Welcome! I\'m looking forward to helping you keep track of Canvas',
+    },
+  },
+}, (err, res, body) => {
+  if (err) {
+    console.log('Error setting greeting menu');
+    console.log(err);
+  } else if (res.body.error) {
+    console.log('Error');
+    console.log(res.body.console.error);
+  }
+});
+
 // Attach our events to the controller
 controller = require('./events')(controller);
 // Attach 'hears' to the controller
 controller = require('./hears')(controller);
-
 
 // Store a new user (senderID) in the DB if they don't exist already
 const createUserIfNew = (id, ts) => {

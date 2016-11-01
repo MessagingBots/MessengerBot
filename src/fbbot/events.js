@@ -1,4 +1,3 @@
-
 // Take in the Botkit controller and attach events to it
 module.exports = (controller) => {
   // This is triggered when a user clicks the send-to-messenger plugin
