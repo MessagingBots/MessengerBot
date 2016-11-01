@@ -2,7 +2,7 @@ import axios from 'axios';
 import config from 'config-heroku';
 
 const FacebookStrategy = require('passport-facebook').Strategy;
-const Student = require('../models/Student');
+const Student = require('../db/models/Student');
 
 const fbConfig = config.fb;
 const callbackURL = fbConfig.callbackURL;
