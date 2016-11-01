@@ -5,6 +5,7 @@ import request from 'request';
 const access_token = config.fb.pageAccessToken;
 const verify_token = config.fb.verifyToken;
 const API_URL = config.API_URL;
+const CANVAS_URL = config.CANVAS_URL;
 const CANVAS_API = config.CANVAS_API;
 const SERVER_URL = config.SERVER_URL;
 
@@ -137,7 +138,7 @@ module.exports = (controller) => {
                 if (!course.name) {
                   course.name = 'No name for course';
                 }
-                const courseURL = `${CANVAS_API}courses/${course.id}`;
+                const courseURL = `${CANVAS_URL}courses/${course.id}`;
 
                 newCourseElement = {
                   title: course.name,
