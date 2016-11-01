@@ -1,13 +1,13 @@
 import request from 'request';
-import config from 'config';
+import config from 'config-heroku';
 import axios from 'axios';
 
 const Student = require('../models/Student');
 
-const API_URL = config.get('API_URL');
-const CANVAS_API = config.get('CANVAS_API');
-const SERVER_URL = config.get('SERVER_URL');
-const fbConfig = config.get('fb');
+const API_URL = config.API_URL;
+const CANVAS_API = config.CANVAS_API;
+const SERVER_URL = config.SERVER_URL;
+const fbConfig = config.fb;
 
 /*
  * Call the Send API. The message data goes in the body. If successful, we'll
@@ -44,6 +44,8 @@ function callSendAPI(messageData) {
  *
  */
 function sendAccountLinking(recipientId) {
+  console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``');
+  console.log(`${SERVER_URL}assets/thumbsup.png`);
   const messageData = {
     recipient: {
       id: recipientId,
@@ -110,18 +112,25 @@ function sendCourses(recipientId) {
           .then((succ) => {
             const courses = succ.data;
             courses.forEach((course) => {
-              console.log(course.name);
               if (!course.name) {
                 course.name = ' ';
               }
+              const courseURL = `${CANVAS_API}courses/${course.id}`;
               messageData.message.attachment.payload.elements.push({
                 title: course.name,
                 image_url: `${SERVER_URL}assets/thumbsup.png`,
-                buttons: [{
-                  title: 'View Course',
-                  type: 'web_url',
-                  url: 'google.com',
-                }],
+                buttons: [
+                  {
+                    title: 'Open Course',
+                    type: 'web_url',
+                    url: courseURL,
+                  },
+                  {
+                    title: 'View Assignments',
+                    type: 'web_url',
+                    url: `${courseURL}/assignments`,
+                  },
+                ],
               });
             });
             callSendAPI(messageData);

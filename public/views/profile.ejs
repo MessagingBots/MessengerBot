@@ -1,9 +1,8 @@
 <!doctype html>
 <html>
 <head>
-    <title>Node Authentication</title>
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+    <% include partials/common_title.ejs %>
+    <% include partials/common_css.ejs %>
     <style>
         body        { padding-top:80px; word-wrap:break-word; }
     </style>
@@ -12,7 +11,7 @@
 <div class="container">
 
     <div class="page-header text-center">
-        <h1><span class="fa fa-anchor"></span> Profile Page</h1>
+        <h1>Profile</h1>
         <a href="/logout" class="btn btn-default btn-sm">Logout</a>
     </div>
 
@@ -63,7 +62,7 @@
         <!-- CANVAS INFORMATION -->
         <div class="col-sm-6">
             <div class="well">
-                <h3 class="text-primary"><span class="fa fa-canvas"></span> Canvas</h3>
+                <h3 class="text-primary canvas"><span class="fa fa-graduation-cap"></span> Canvas</h3>
 
                 <!-- check if the user has this token (is the user authenticated with this social account) -->
                   <% if (user.canvas.token) { %>
