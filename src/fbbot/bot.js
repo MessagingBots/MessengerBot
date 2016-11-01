@@ -38,52 +38,29 @@ request.post(`https://graph.facebook.com/me/subscribed_apps?access_token=${acces
 
 // Attach our events to the controller
 controller = require('./events')(controller);
+// Attach 'hears' to the controller
+controller = require('./hears')(controller);
 
 
-// user said hello
-controller.hears(['hello'], 'message_received', (bot, message) => {
-  bot.reply(message, 'Hey there.');
-});
-
-
-// user said hello
-controller.hears(['linking'], 'message_received', (bot, message) => {
-  const id = message.user;
-  const attachment = {
-    type: 'template',
-    payload: {
-      template_type: 'generic',
-      elements: [{
-        title: 'Welcome. Link your account.',
-        image_url: `${SERVER_URL}assets/thumbsup.png`,
-        buttons: [{
-          type: 'account_link',
-          url: `${API_URL}auth/facebook?senderId=${id}&pat=${access_token}`,
-        }],
-      }],
-    },
-  };
-  bot.reply(message, { attachment });
-});
-
-// user says anything else
-controller.hears('(.*)', 'message_received', (bot, message) => {
-  bot.reply(message, `you said ${message.match[1]}`);
-});
-
-const create_user_if_new = (id, ts) => {
-  controller.storage.students.get(id, (err, user) => {
+// Store a new user (senderID) in the DB if they don't exist already
+const createUserIfNew = (id, ts) => {
+  controller.storage.students.getByFBSenderID(id, (err, user) => {
     if (err) {
-      console.log('creating new user');
+      console.log('Error creating new user');
       console.log(err);
     }
     else if (!user) {
-      controller.storage.students.save({ id, created_at: ts });
+      console.log('Creating new user!');
+      console.log(user);
+      controller.storage.students.save({ 'fb.senderID': id, created_at: ts });
+    } else {
+      console.log('User found');
+      console.log(user);
     }
   });
 };
 
-// this function processes the POST request to the webhook
+// This function processes the POST request to the webhook
 const handler = (obj) => {
   controller.debug('GOT A MESSAGE HOOK');
   let message;
@@ -105,9 +82,11 @@ const handler = (obj) => {
             attachments: facebook_message.message.attachments,
           };
 
+
           if (!facebook_message.message.is_echo) {
             // Save if a new user, and not if an echo
-            create_user_if_new(facebook_message.sender.id, facebook_message.timestamp);
+            console.log('Creating new user');
+            createUserIfNew(facebook_message.sender.id, facebook_message.timestamp);
           }
 
           controller.receiveMessage(fbBot, message);
@@ -146,8 +125,8 @@ const handler = (obj) => {
             timestamp: facebook_message.timestamp,
           };
 
-            // save if user comes from "Send to Messenger"
-          create_user_if_new(facebook_message.sender.id, facebook_message.timestamp);
+          // Save if user comes from "Send to Messenger"
+          createUserIfNew(facebook_message.sender.id, facebook_message.timestamp);
 
           controller.trigger('facebook_optin', [fbBot, message]);
         }

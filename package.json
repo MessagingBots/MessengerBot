@@ -1,7 +1,7 @@
 {
   "name": "Messenger-Bot",
   "version": "1.0.0",
-  "description": "",
+  "description": "Facebook Messenger and Slack personal assistant bot for UF students.",
   "engines": {
     "node": "6.9.1"
   },
@@ -11,7 +11,7 @@
     "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Ervis Shqiponja, Zach Schultz, Denzel Mathew",
   "license": "ISC",
   "devDependencies": {
     "babel-core": "^6.14.0",
