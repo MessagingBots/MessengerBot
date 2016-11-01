@@ -115,7 +115,7 @@ function sendCourses(recipientId) {
               if (!course.name) {
                 course.name = ' ';
               }
-              const courseURL = `https://ufl.instructure.com/courses/${course.id}`;
+              const courseURL = `${CANVAS_API}courses/${course.id}`;
               messageData.message.attachment.payload.elements.push({
                 title: course.name,
                 image_url: `${SERVER_URL}assets/thumbsup.png`,
