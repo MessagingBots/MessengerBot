@@ -100,8 +100,8 @@ module.exports = (app, passport) => {
   });
 
   // Routes for the FB messenger bot webhook
-  app.get('/fbbot/webhook', fbwebhook.get);
-  app.post('/fbbot/webhook', fbwebhook.post);
+  // app.get('/fbbot/webhook', fbwebhook.get);
+  // app.post('/fbbot/webhook', fbwebhook.post);
 
   /** --------------------
    ** Linking accounts
