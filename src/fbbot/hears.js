@@ -85,7 +85,7 @@ module.exports = (controller) => {
           image_url: `${SERVER_URL}assets/thumbsup.png`,
           buttons: [{
             type: 'account_link',
-            url: `${API_URL}auth/facebook?senderId=${id}&pat=${access_token}`,
+            url: `${API_URL}auth/facebook?fromBot=${true}&senderId=${id}&pat=${access_token}`,
           }],
         }],
       },

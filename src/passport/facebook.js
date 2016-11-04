@@ -19,6 +19,9 @@ module.exports = (passport) => {
   }, (req, accessToken, refreshToken, profile, done) => {
     process.nextTick(() => {
       // Check if a user is logged in
+
+      console.log('state DATA?!??!?!?!~~~');
+      console.log(req.query.state);
       if (!req.user) {
         // find the user in the database based on their facebook id
         Student.findOne({ 'fb.id': profile.id }, (err, student) => {
@@ -94,12 +97,6 @@ module.exports = (passport) => {
           if (err) {
             console.log('Error saving a linked account');
             throw err;
-          }
-          if (req.session.redirectURI.length > 0) {
-            console.log('req.session.redirectURI');
-            console.log(req.session.redirectURI);
-            req.session.redirectURI = '';
-            return done(null, user, { accountLinkingRedirect: true });
           }
 
           return done(null, user, { connectedAccount: true });
