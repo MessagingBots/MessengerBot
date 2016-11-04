@@ -62,6 +62,7 @@ module.exports = (app, passport) => {
   app.get('/api/auth/facebook', (req, res, next) => {
     let state = '';
     if (req.query.fromBot) {
+      // Set FB state to be fromBot so we know this came from Messenger
       state = 'fromBot';
       const senderId = req.query.senderId;
       const pat = req.query.pat;
@@ -95,13 +96,7 @@ module.exports = (app, passport) => {
         if (loginErr) {
           return next(err);
         }
-        // Is this the first time a user is linking their account?
-        //  If so, redirect to the redirectURI so FB can let our bot know
-
-        console.log('~~~~~~~~~~~~~~~~~~``');
-        console.log('REDIRECT URI');
-        console.log('REQ STATE');
-        console.log(req.query.state);
+        // Special redirect if login came from Messenger
         if (req.query.state === 'fromBot') {
           return res.redirect(`${req.session.redirectURI}&authorization_code=${req.session.authCode}`);
         }

@@ -30,8 +30,8 @@ StudentSchema.methods.generateHash = password =>
   bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
 
 // checking if password is valid
-StudentSchema.methods.validPassword = password =>
-  bcrypt.compareSync(password, this.local.password);
-
+StudentSchema.methods.validPassword = function comparePass(password) {
+  return bcrypt.compareSync(password, this.local.password);
+};
 
 module.exports = mongoose.model('Student', StudentSchema);
