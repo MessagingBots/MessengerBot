@@ -1,5 +1,5 @@
 const facebook = require('./facebook');
-const Student = require('../models/Student');
+const Student = require('../db/models/Student');
 const LocalStrategy = require('passport-local').Strategy;
 
 module.exports = (passport) => {

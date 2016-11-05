@@ -2,7 +2,7 @@ import request from 'request';
 import config from 'config-heroku';
 import axios from 'axios';
 
-const Student = require('../models/Student');
+const Student = require('../db/models/Student');
 
 const API_URL = config.API_URL;
 const CANVAS_API = config.CANVAS_API;

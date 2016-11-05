@@ -10,6 +10,7 @@ import bodyParser from 'body-parser';
 import config from 'config-heroku';
 
 import routes from './routes/routes';
+import fbBotServer from './fbbot/server';
 
 console.log('CONFIG IS');
 console.log(config);
@@ -44,6 +45,9 @@ app.use(flash());
 
 routes(app, passport);
 
+// Load and run the FB messenger Botkit bot
+fbBotServer();
+
 app.listen(process.env.PORT || 3000, (req, res) => {
-  console.log('Messaging bot server running at port ' + (process.env.PORT || 3000));
+  console.log(`Application running at port ${(process.env.PORT || 3000)}`);
 });
