@@ -2,7 +2,7 @@ import axios from 'axios';
 import config from 'config-heroku';
 
 const FacebookStrategy = require('passport-facebook').Strategy;
-const Student = require('../models/Student');
+const Student = require('../db/models/Student');
 
 const fbConfig = config.fb;
 const callbackURL = fbConfig.callbackURL;
@@ -94,12 +94,6 @@ module.exports = (passport) => {
           if (err) {
             console.log('Error saving a linked account');
             throw err;
-          }
-          if (req.session.redirectURI.length > 0) {
-            console.log('req.session.redirectURI');
-            console.log(req.session.redirectURI);
-            req.session.redirectURI = '';
-            return done(null, user, { accountLinkingRedirect: true });
           }
 
           return done(null, user, { connectedAccount: true });

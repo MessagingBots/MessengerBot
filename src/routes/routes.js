@@ -48,24 +48,40 @@ module.exports = (app, passport) => {
   });
 
   // FB messenger both FB linking step 1
+  app.get('/api/auth/canvas/redirect', (req, res) => {
+    console.log('CANVAS!!');
+    console.log('req.query');
+    console.log(req.query);
+    res.send({success: 'succ'});
+  });
+
+  // FB messenger both FB linking step 1
+  // @TODO!
+  // SEE IF WE CAN TIE STATE HERE LIKE WE CAN IN CANVAS
+  // https://canvas.instructure.com/doc/api/file.oauth.html
   app.get('/api/auth/facebook', (req, res, next) => {
-    let senderId = req.query.senderId;
-    let pat = req.query.pat;
-    req.session.account_linking_token = req.query.account_linking_token;
-    const authCode = '1234567890';
-    // let redirectURISuccess = redirectURI + "&authorization_code=" + authCode;
-    req.session.redirectURI = req.query.redirect_uri;
-    req.session.authCode = authCode;
-    console.log('~~~~~~~~~~~~~~~~~~``');
-    console.log('REDIRECT URI');
-    console.log(req.session.redirectURI);
+    let state = '';
+    if (req.query.fromBot) {
+      // Set FB state to be fromBot so we know this came from Messenger
+      state = 'fromBot';
+      const senderId = req.query.senderId;
+      const pat = req.query.pat;
+      const authCode = '1234567890';
+      req.session.account_linking_token = req.query.account_linking_token;
+      req.session.redirectURI = req.query.redirect_uri;
+      req.session.authCode = authCode;
+      console.log(req.session.redirectURI);
+    }
     passport.authenticate('facebook', {
       scope: ['email', 'public_profile'],
+      state
     })(req, res, next);
   });
 
 
   // FB messenger both FB linking step 2 (callback from Fb)
+
+  // @TODO: TIE STATE HERE
   app.get('/api/auth/facebook/callback', (req, res, next) => {
     passport.authenticate('facebook', (err, user, info) => {
       if (err) {
@@ -80,28 +96,21 @@ module.exports = (app, passport) => {
         if (loginErr) {
           return next(err);
         }
-        // Is this the first time a user is linking their account?
-        //  If so, redirect to the redirectURI so FB can let our bot know
 
-        console.log('~~~~~~~~~~~~~~~~~~``');
-        console.log('REDIRECT URI');
-        console.log(req.session.redirectURI);
-        if (info.accountLinkingRedirect) {
-          console.log('info was');
-          console.log(info);
+        // Special redirect if login came from Messenger
+        if (req.query.state === 'fromBot') {
           return res.redirect(`${req.session.redirectURI}&authorization_code=${req.session.authCode}`);
         }
         console.log('User was logged in');
         console.log(user);
-        console.log('about to render success.js');
         return res.redirect('/profile');
       });
     })(req, res, next);
   });
 
   // Routes for the FB messenger bot webhook
-  app.get('/fbbot/webhook', fbwebhook.get);
-  app.post('/fbbot/webhook', fbwebhook.post);
+  // app.get('/fbbot/webhook', fbwebhook.get);
+  // app.post('/fbbot/webhook', fbwebhook.post);
 
   /** --------------------
    ** Linking accounts

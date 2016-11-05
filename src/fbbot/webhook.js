@@ -7,7 +7,7 @@ import {
   sendReadReceipt, sendTypingOff, sendCourses,
 } from './sendUtils';
 
-const Student = require('../models/Student');
+const Student = require('../db/models/Student');
 
 const API_URL = config.API_URL;
 const SERVER_URL = config.SERVER_URL;
