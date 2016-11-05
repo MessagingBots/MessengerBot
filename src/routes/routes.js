@@ -96,10 +96,13 @@ module.exports = (app, passport) => {
         if (loginErr) {
           return next(err);
         }
+
         // Special redirect if login came from Messenger
         if (req.query.state === 'fromBot') {
           return res.redirect(`${req.session.redirectURI}&authorization_code=${req.session.authCode}`);
         }
+        console.log('User was logged in');
+        console.log(user);
         return res.redirect('/profile');
       });
     })(req, res, next);

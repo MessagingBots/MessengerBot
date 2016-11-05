@@ -19,9 +19,6 @@ module.exports = (passport) => {
   }, (req, accessToken, refreshToken, profile, done) => {
     process.nextTick(() => {
       // Check if a user is logged in
-
-      console.log('state DATA?!??!?!?!~~~');
-      console.log(req.query.state);
       if (!req.user) {
         // find the user in the database based on their facebook id
         Student.findOne({ 'fb.id': profile.id }, (err, student) => {

@@ -3,6 +3,13 @@ Messenger bots and API
 
 # Instructions
 
+## Dev environment
+To run in the `dev` environment, just simply run `gulp`. Our gulpfile will look for the `--production` args,
+and if not found just runs in the `dev` environment
+
+To run in the `production` environment, run `gulp --production`, and our gulpfile will use the production
+environment and config
+
 ## Config
 We use [config-heroku](https://www.npmjs.com/package/config-heroku) on top of [node-config](https://www.npmjs.com/package/config) to deploy our local config to heroku
 
@@ -29,7 +36,7 @@ Our `default.json` looks like:
       "dbURL": "mongodb://localhost:27017/messenger"
     }
 
-`heroku.json` should have deployment-specifig config like:
+`heroku.json` should have deployment-specific config like:
 
     {
       "fb": {
@@ -37,6 +44,16 @@ Our `default.json` looks like:
       },
       "API_URL": "HEROKU_APP_URL/api/",
       "SERVER_URL": "HEROKU_APP_URL",
+    }
+
+`dev.json` should have local config like:
+
+    {
+      "fb": {
+        "callbackURL": "http://localhost:3000/api/auth/facebook/callback"
+      },
+      "API_URL": "http://localhost:3000/api/",
+      "SERVER_URL": "http://localhost:3000/",
     }
 
 ## Development
