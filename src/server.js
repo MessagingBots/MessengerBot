@@ -12,9 +12,6 @@ import config from 'config-heroku';
 import routes from './routes/routes';
 import fbBotServer from './fbbot/server';
 
-console.log('CONFIG IS');
-console.log(config);
-
 const DB_URL = config.dbURL;
 const publicPath = path.resolve('public');
 const app = express();

@@ -11,6 +11,8 @@ const StudentSchema = new mongoose.Schema({
   },
   canvas: {
     token: String,
+    courses: [],
+    subscribedCourses: [],
   },
   fb: {
     id: String,

@@ -1,7 +1,10 @@
 /* eslint consistent-return: "off" */
+import config from 'config-heroku';
 import signup from './signup';
 import login from './login';
-import fbwebhook from '../fbbot/webhook';
+
+const DB_URL = config.dbURL;
+const storage = require('../db/config')({ dbURL: DB_URL });
 
 // Route middleware to make sure a user is logged in
 function isLoggedIn(req, res, next) {
@@ -33,11 +36,18 @@ module.exports = (app, passport) => {
     res.render('profile.ejs', { user: req.user });
   });
 
-  // @TODO: Get Canvas instructure dev api key before we can OAuth
-  // app.get('/api/auth/canvas', (req, res) => {
-  //   const URL = 'https://ufl.instructure.com/login/oauth2/auth?' +
-  //     'client_id'
-  // });
+  app.post('/api/subscribe/:courses', (req, res) => {
+    const courses = req.params.courses.split(',');
+    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``');
+    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``');
+    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``');
+    console.log('storage is');
+    console.log(storage);
+    console.log('courses are:');
+    console.log(courses);
+    res.send('your courses are ' +
+      courses.map(course => course).join('\n'));
+  });
 
   app.get('/api/canvas/courses', (req, res) => {
     console.log('User is');
@@ -80,8 +90,6 @@ module.exports = (app, passport) => {
 
 
   // FB messenger both FB linking step 2 (callback from Fb)
-
-  // @TODO: TIE STATE HERE
   app.get('/api/auth/facebook/callback', (req, res, next) => {
     passport.authenticate('facebook', (err, user, info) => {
       if (err) {

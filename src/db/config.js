@@ -1,5 +1,3 @@
-let monk = require('monk');
-
 /**
 * Creates a storage object for a given "zone", i.e, teams, channels, or users
 *
@@ -17,6 +15,9 @@ function getStorage(db, zone) {
     getByFBSenderID: (fbSenderID, cb) => {
       table.findOne({ 'fb.senderID': fbSenderID }, cb);
     },
+    findOneByFBSenderIDAndUpdate: (fbSenderID, data, cb) => {
+      table.findOneAndUpdate({ 'fb.senderID': fbSenderID }, data, cb);
+    },
     save: (data, cb) => {
       table.findOneAndUpdate({
         id: data.id,
@@ -31,12 +32,13 @@ function getStorage(db, zone) {
   };
 }
 
+
 module.exports = (config) => {
   if (!config || !config.dbURL) {
     throw new Error('You need to provide db url');
   }
 
-  monk = monk(config.dbURL);
+  const monk = require('monk')(config.dbURL);
   const storage = {};
 
   // The below are needed for Botkit to let us use storage
