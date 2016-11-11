@@ -1,3 +1,4 @@
+
 function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
   controller.storage.students.getByFBSenderID(userId, (err, foundUser) => {
     if (err) {
