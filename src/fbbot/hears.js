@@ -265,7 +265,7 @@ module.exports = (controller) => {
   });
 
 
-  controller.hears('^subscribe', 'message_received', (bot, message) => {
+  controller.hears('^subscribe$', 'message_received', (bot, message) => {
     const id = message.user;
     const attachment = {
       type: 'template',
@@ -282,7 +282,7 @@ module.exports = (controller) => {
         console.log(err);
         bot.reply(message, 'I\'m sorry there was an error.');
       } else if (!user) {
-        console.log('We couldn\'t find a user for this account, please link your account');
+        console.log('tee eheeeWe couldn\'t find a user for this account, please link your account');
         bot.reply(message, 'We couldn\'t find a user for this account, please link your account');
       } else if (user.canvas.token) {
         const axiosOptions = {
@@ -322,6 +322,7 @@ module.exports = (controller) => {
             }); // End of courses.forEach(...)
 
             // Send courses to user
+            console.log('replying!');
             bot.reply(message, { attachment }, (botErr) => {
               if (botErr) {
                 console.log('ERROR');

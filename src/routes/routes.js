@@ -4,6 +4,7 @@ import signup from './signup';
 import login from './login';
 
 const DB_URL = config.dbURL;
+const API_URL = config.API_URL;
 const storage = require('../db/config')({ dbURL: DB_URL });
 
 // Route middleware to make sure a user is logged in
@@ -33,7 +34,10 @@ module.exports = (app, passport) => {
   app.post('/signup', signup.signup(passport));
 
   app.get('/profile', isLoggedIn, (req, res) => {
-    res.render('profile.ejs', { user: req.user });
+    res.render('profile.ejs', {
+      user: req.user,
+      API_URL,
+    });
   });
 
   app.post('/api/subscribe/:courses', (req, res) => {
@@ -134,6 +138,42 @@ module.exports = (app, passport) => {
     failureRedirect: '/connect/local',
     failureFlash: true,
   }));
+
+  app.post('/api/connect/canvas', isLoggedIn, (req, res) => {
+    const newToken = req.body.newToken;
+
+    if (!newToken) {
+      res.status(400);
+      res.send({
+        error: 'No new token was specified',
+      });
+    } else {
+      storage.students.update(req.user._id,
+        { 'canvas.token': newToken },
+        (err, user) => {
+          if (err) {
+            console.log('Error updating user\'s Canvas token');
+            console.log(err);
+            res.status(400);
+            res.send({
+              error: err,
+            });
+          } else if (!user) {
+            console.log('No user found...');
+            res.status(400);
+            res.send({
+              error: 'No user found...try logging in again',
+            });
+          } else {
+            console.log('Updated user\'s canvas token!');
+            console.log(user.canvas.token);
+            res.send({
+              success: 'true',
+            });
+          }
+        });
+    }
+  });
 
   // Facebook
   app.get('/connect/facebook', (req, res, next) => {

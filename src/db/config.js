@@ -18,6 +18,9 @@ function getStorage(db, zone) {
     findOneByFBSenderIDAndUpdate: (fbSenderID, data, cb) => {
       table.findOneAndUpdate({ 'fb.senderID': fbSenderID }, data, cb);
     },
+    update: (id, data, cb) => {
+      table.findOneAndUpdate(id, { $set: data }, cb);
+    },
     save: (data, cb) => {
       table.findOneAndUpdate({
         id: data.id,
