@@ -9,6 +9,14 @@ const CANVAS_URL = config.CANVAS_URL;
 const CANVAS_API = config.CANVAS_API;
 const SERVER_URL = config.SERVER_URL;
 
+function buildCourseElement(title, image_url , buttons) {
+  return {
+    title,
+    image_url,
+    buttons,
+  }
+}
+
 // Take in the Botkit controller and attach hears to it
 module.exports = (controller) => {
   // user said hello
@@ -29,13 +37,31 @@ module.exports = (controller) => {
         call_to_actions: [
           {
             type: 'postback',
-            title: 'Home',
-            payload: 'home',
+            title: 'Schedule',
+            payload: JSON.stringify({
+              action: 'getSchedule',
+            }),
           },
           {
             type: 'postback',
-            title: 'Empty',
-            payload: 'Empty',
+            title: 'Upcoming HW',
+            payload: JSON.stringify({
+              action: 'getUpcomingHw',
+            }),
+          },
+          {
+            type: 'postback',
+            title: 'Announcements',
+            payload: JSON.stringify({
+              action: 'getAnnouncements',
+            }),
+          },
+          {
+            type: 'postback',
+            title: 'Help',
+            payload: JSON.stringify({
+              action: 'help',
+            }),
           },
         ],
       },
@@ -133,24 +159,24 @@ module.exports = (controller) => {
               if (!course.name) {
                 course.name = 'No name for course';
               }
-              const courseURL = `${CANVAS_URL}courses/${course.id}`;
 
-              newCourseElement = {
-                title: course.name,
-                image_url: `${SERVER_URL}assets/thumbsup.png`,
-                buttons: [
-                  {
-                    title: 'Open Course',
-                    type: 'web_url',
-                    url: courseURL,
-                  },
-                  {
-                    title: 'View Assignments',
-                    type: 'web_url',
-                    url: `${courseURL}/assignments`,
-                  },
-                ],
-              };
+              const courseURL = `${CANVAS_URL}courses/${course.id}`;
+              const imageUrl = `${SERVER_URL}assets/thumbsup.png`;
+              const buttons = [
+                {
+                  title: 'Open Course',
+                  type: 'web_url',
+                  url: courseURL,
+                },
+                {
+                  title: 'View Assignments',
+                  type: 'web_url',
+                  url: `${courseURL}/assignments`,
+                },
+              ];
+
+              newCourseElement = buildCourseElement(course.name, imageUrl, buttons);
+
               attachment.payload.elements.push(newCourseElement);
             }); // End of courses.forEach(...)
 
@@ -212,27 +238,28 @@ module.exports = (controller) => {
                 if (!course.name) {
                   course.name = 'No name for course';
                 }
-                const courseURL = `${CANVAS_URL}courses/${course.id}`;
-                newCourseElement = {
-                  title: course.name,
-                  image_url: `${SERVER_URL}assets/thumbsup.png`,
-                  buttons: [
-                    {
-                      title: 'Open Course',
-                      type: 'web_url',
-                      url: courseURL,
-                    },
-                    {
-                      title: 'Remove Course',
-                      type: 'postback',
-                      payload: JSON.stringify({
-                        action: 'removeCourse',
-                        course: course.id,
-                      }),
-                    },
-                  ],
-                };
 
+                const courseURL = `${CANVAS_URL}courses/${course.id}`;
+                const imageUrl = `${SERVER_URL}assets/thumbsup.png`;
+                const buttons = [
+                  {
+                    title: 'Open Course',
+                    type: 'web_url',
+                    url: courseURL,
+                  },
+                  {
+                    title: 'Remove Course',
+                    type: 'postback',
+                    payload: JSON.stringify({
+                      action: 'removeCourse',
+                      data: {
+                        course: course.id,
+                      },
+                    }),
+                  },
+                ];
+
+                newCourseElement = buildCourseElement(course.name, imageUrl, buttons);
                 attachment.payload.elements.push(newCourseElement);
               }
             }); // End of courses.forEach(...)
@@ -304,20 +331,22 @@ module.exports = (controller) => {
               if (!course.name) {
                 course.name = 'No name for course';
               }
-              newCourseElement = {
-                title: course.name,
-                image_url: `${SERVER_URL}assets/thumbsup.png`,
-                buttons: [
-                  {
-                    title: 'Watch Course',
-                    type: 'postback',
-                    payload: JSON.stringify({
-                      action: 'watchCourse',
+
+              const imageUrl = `${SERVER_URL}assets/thumbsup.png`;
+              const buttons = [
+                {
+                  title: 'Watch Course',
+                  type: 'postback',
+                  payload: JSON.stringify({
+                    action: 'watchCourse',
+                    data: {
                       course: course.id,
-                    }),
-                  },
-                ],
-              };
+                    },
+                  }),
+                },
+              ];
+
+              newCourseElement = buildCourseElement(course.name, imageUrl, buttons);
               attachment.payload.elements.push(newCourseElement);
             }); // End of courses.forEach(...)
 

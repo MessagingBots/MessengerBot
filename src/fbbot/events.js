@@ -56,16 +56,38 @@ module.exports = (controller) => {
   });
 
   // this is triggered when a user clicks the send-to-messenger plugin
+  // payload comes in the JSON form: { action: String, data: Object }
   controller.on('facebook_postback', (bot, message) => {
     console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~');
     console.log('facebook postback occured!');
+    console.log('message');
+    console.log(message);
     const payload = JSON.parse(message.payload);
-    const course = payload.course;
-    console.log(payload);
-    if (payload && payload.action === 'watchCourse') {
-      alterUserCourseSubscriptions(message.user, course, controller, true);
-    } else if (payload && payload.action === 'removeCourse') {
-      alterUserCourseSubscriptions(message.user, course, controller, false);
+    const { action, data } = payload;
+
+    switch (action) {
+      case 'watchCourse':
+        alterUserCourseSubscriptions(message.user, data.course, controller, true);
+        break;
+      case 'removeCourse':
+        alterUserCourseSubscriptions(message.user, payload.data.course, controller, false);
+        break;
+      case 'getSchedule':
+        // retrieveUserSchedule
+        // sendMsg(userSchedule)
+        break;
+      case 'getUpcomingHw':
+        // retrieveUpcomingHw
+        // sendMsg(UpcomingHw)
+        break;
+      case 'getAnnouncements':
+        // retrieveAnnouncemnets
+        // sendMsg(announcements)
+        break;
+      case 'help':
+        // sendMsg(help)
+        break;
+      default:
     }
   });
 
