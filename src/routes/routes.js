@@ -1,7 +1,11 @@
 /* eslint consistent-return: "off" */
+import config from 'config-heroku';
 import signup from './signup';
 import login from './login';
-import fbwebhook from '../fbbot/webhook';
+
+const DB_URL = config.dbURL;
+const API_URL = config.API_URL;
+const storage = require('../db/config')({ dbURL: DB_URL });
 
 // Route middleware to make sure a user is logged in
 function isLoggedIn(req, res, next) {
@@ -30,14 +34,24 @@ module.exports = (app, passport) => {
   app.post('/signup', signup.signup(passport));
 
   app.get('/profile', isLoggedIn, (req, res) => {
-    res.render('profile.ejs', { user: req.user });
+    res.render('profile.ejs', {
+      user: req.user,
+      API_URL,
+    });
   });
 
-  // @TODO: Get Canvas instructure dev api key before we can OAuth
-  // app.get('/api/auth/canvas', (req, res) => {
-  //   const URL = 'https://ufl.instructure.com/login/oauth2/auth?' +
-  //     'client_id'
-  // });
+  app.post('/api/subscribe/:courses', (req, res) => {
+    const courses = req.params.courses.split(',');
+    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``');
+    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``');
+    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``');
+    console.log('storage is');
+    console.log(storage);
+    console.log('courses are:');
+    console.log(courses);
+    res.send('your courses are ' +
+      courses.map(course => course).join('\n'));
+  });
 
   app.get('/api/canvas/courses', (req, res) => {
     console.log('User is');
@@ -80,8 +94,6 @@ module.exports = (app, passport) => {
 
 
   // FB messenger both FB linking step 2 (callback from Fb)
-
-  // @TODO: TIE STATE HERE
   app.get('/api/auth/facebook/callback', (req, res, next) => {
     passport.authenticate('facebook', (err, user, info) => {
       if (err) {
@@ -126,6 +138,42 @@ module.exports = (app, passport) => {
     failureRedirect: '/connect/local',
     failureFlash: true,
   }));
+
+  app.post('/api/connect/canvas', isLoggedIn, (req, res) => {
+    const newToken = req.body.newToken;
+
+    if (!newToken) {
+      res.status(400);
+      res.send({
+        error: 'No new token was specified',
+      });
+    } else {
+      storage.students.update(req.user._id,
+        { 'canvas.token': newToken },
+        (err, user) => {
+          if (err) {
+            console.log('Error updating user\'s Canvas token');
+            console.log(err);
+            res.status(400);
+            res.send({
+              error: err,
+            });
+          } else if (!user) {
+            console.log('No user found...');
+            res.status(400);
+            res.send({
+              error: 'No user found...try logging in again',
+            });
+          } else {
+            console.log('Updated user\'s canvas token!');
+            console.log(user.canvas.token);
+            res.send({
+              success: 'true',
+            });
+          }
+        });
+    }
+  });
 
   // Facebook
   app.get('/connect/facebook', (req, res, next) => {

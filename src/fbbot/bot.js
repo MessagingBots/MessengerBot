@@ -47,7 +47,7 @@ request({
       text: 'Welcome! I\'m looking forward to helping you keep track of Canvas',
     },
   },
-}, (err, res, body) => {
+}, (err, res) => {
   if (err) {
     console.log('Error setting greeting menu');
     console.log(err);

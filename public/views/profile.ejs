@@ -4,8 +4,32 @@
     <% include partials/common_title.ejs %>
     <% include partials/common_css.ejs %>
     <style>
-        body        { padding-top:80px; word-wrap:break-word; }
+        body {
+          padding-top:80px; word-wrap:break-word;
+        }
+
+        #canvas-token {
+          width: 100%;
+        }
+
+        .hidden {
+          display: none;
+        }
+
+        .displayed {
+          display: block;
+        }
+
+        #canvas-success {
+          color: rgb(127, 210, 72);
+        }
+
+        #canvas-error {
+          color: rgb(171, 80, 80);
+        }
     </style>
+
+    <script src="./profile.js" charset="utf-8"></script>
 </head>
 <body>
 <div class="container">
@@ -65,14 +89,34 @@
                 <h3 class="text-primary canvas"><span class="fa fa-graduation-cap"></span> Canvas</h3>
 
                 <!-- check if the user has this token (is the user authenticated with this social account) -->
-                  <% if (user.canvas.token) { %>
+                <div id="canvas-alert-container">
+                  <h3 class="hidden success" id="canvas-success">Successfully changed Canvas token!</h3>
+                  <h3 class="hidden error" id="canvas-error">Ooops...error changing your Canvas token</h3>
+                </div>
                     <p>
-                        <strong>token</strong>: <%= user.canvas.token %><br>
+                        <strong>token</strong>:
+                          <input type="text"
+                            <% if (user.canvas.token) { %>
+                                readonly="true"
+                                value=<%= user.canvas.token %>
+                            <% } %>
+                            name="canvas-token" id="canvas-token">
+                        <br>
                     </p>
-                <% } else { %>
 
-                <% } %>
+                <a id="change-canvas-token" class="btn btn-primary">Change Token</a>
+                <span id="api-url" hidden="true"><%= API_URL%></span>
+                <br>
+                <p>
+                  Click "Change Token" once to enable input, then again to submit
+                    your new token
+                </p>
 
             </div>
         </div>
     </div>
+
+    <script type="text/javascript">
+      console.log(window);
+
+    </script>

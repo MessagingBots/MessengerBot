@@ -22,7 +22,6 @@ module.exports = (passport) => {
       if (!req.user) {
         // find the user in the database based on their facebook id
         Student.findOne({ 'fb.id': profile.id }, (err, student) => {
-
           // if there is an error, stop everything and return that
           // ie an error connecting to the database
           if (err) {

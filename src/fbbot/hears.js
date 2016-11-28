@@ -11,14 +11,13 @@ const SERVER_URL = config.SERVER_URL;
 
 // Take in the Botkit controller and attach hears to it
 module.exports = (controller) => {
-
   // user said hello
   controller.hears(['hello'], 'message_received', (bot, message) => {
     bot.reply(message, 'Hey there.');
   });
 
   // user said hello
-  controller.hears(['add menu'], 'message_received', (bot, message) => {
+  controller.hears(['add menu'], 'message_received', () => {
     console.log('Adding persistent menu');
     request({
       url: 'https://graph.facebook.com/v2.6/me/thread_settings',
@@ -40,7 +39,7 @@ module.exports = (controller) => {
           },
         ],
       },
-    }, (err, res, body) => {
+    }, (err, res) => {
       if (err) {
         console.log('Error adding menu');
         console.log(err);
@@ -51,7 +50,7 @@ module.exports = (controller) => {
     });
   });
 
-  controller.hears(['remove menu'], 'message_received', (bot, message) => {
+  controller.hears(['remove menu'], 'message_received', () => {
     console.log('Removing persistent menu');
     request({
       url: 'https://graph.facebook.com/v2.6/me/thread_settings',
@@ -62,7 +61,7 @@ module.exports = (controller) => {
         thread_state: 'existing_thread',
         call_to_actions: [],
       },
-    }, (err, res, body) => {
+    }, (err, res) => {
       if (err) {
         console.log('Error removing menu');
         console.log(err);
@@ -94,7 +93,8 @@ module.exports = (controller) => {
   });
 
   // Send user their current courses
-  controller.hears(['courses'], 'message_received', (bot, message) => {
+  controller.hears('^courses$', 'message_received', (bot, message) => {
+    console.log('HEARD CUORSES!');
     const id = message.user;
     const attachment = {
       type: 'template',
@@ -110,36 +110,109 @@ module.exports = (controller) => {
         console.log('Error finding user');
         console.log(err);
         bot.reply(message, 'I\'m sorry there was an error.');
+      } else if (!user) {
+        console.log('teedadasd We couldn\'t find a user for this account, please link your account');
+        bot.reply(message, 'We couldn\'t find a user for this account, please link your account');
+      } else if (user.canvas.token) {
+        const axiosOptions = {
+          url: `${CANVAS_API}courses`,
+          headers: {
+            Authorization: `Bearer ${user.canvas.token}`,
+          },
+          params: {
+            enrollment_state: 'active',
+          },
+        };
+
+        axios.request(axiosOptions)
+          .then((res) => {
+            // Will store the element we are adding to the message attachment payload
+            let newCourseElement = {};
+            const courses = res.data;
+            courses.forEach((course) => {
+              if (!course.name) {
+                course.name = 'No name for course';
+              }
+              const courseURL = `${CANVAS_URL}courses/${course.id}`;
+
+              newCourseElement = {
+                title: course.name,
+                image_url: `${SERVER_URL}assets/thumbsup.png`,
+                buttons: [
+                  {
+                    title: 'Open Course',
+                    type: 'web_url',
+                    url: courseURL,
+                  },
+                  {
+                    title: 'View Assignments',
+                    type: 'web_url',
+                    url: `${courseURL}/assignments`,
+                  },
+                ],
+              };
+              attachment.payload.elements.push(newCourseElement);
+            }); // End of courses.forEach(...)
+
+            // Send courses to user
+            bot.reply(message, { attachment });
+          })
+          .catch((canvasErr) => {
+            console.log('Error receiving courses from canvas');
+            console.log(canvasErr);
+            bot.reply(message, 'I\'m sorry, I\'m having trouble retrieving ' +
+              'your courses from canvas at the moment.');
+          });
+      } else {
+      // No Canvas access token associated with the account
+        console.log('We couldn\'t find a canvas token for this account, please link canvas');
+        bot.reply(message, 'We couldn\'t find a Canvas token for this account, please link Canvas');
       }
-      else if (!user) {
+    });
+  });
+
+  controller.hears('^subscriptions$', 'message_received', (bot, message) => {
+    const id = message.user;
+    const attachment = {
+      type: 'template',
+      payload: {
+        template_type: 'generic',
+        elements: [],
+      },
+    };
+
+    // Find the matching user, if successful get their Canvas courses
+    controller.storage.students.getByFBSenderID(id, (err, user) => {
+      if (err) {
+        console.log('Error finding user');
+        console.log(err);
+        bot.reply(message, 'I\'m sorry there was an error.');
+      } else if (!user) {
         console.log('We couldn\'t find a user for this account, please link your account');
         bot.reply(message, 'We couldn\'t find a user for this account, please link your account');
-      } else {
-        console.log('User found');
-        console.log(user);
+      } else if (user.canvas.token) {
+        const axiosOptions = {
+          url: `${CANVAS_API}courses`,
+          headers: {
+            Authorization: `Bearer ${user.canvas.token}`,
+          },
+          params: {
+            enrollment_state: 'active',
+          },
+        };
 
-        if (user.canvas.token) {
-          const axiosOptions = {
-            url: `${CANVAS_API}courses`,
-            headers: {
-              Authorization: `Bearer ${user.canvas.token}`,
-            },
-            params: {
-              enrollment_state: 'active',
-            },
-          };
-
-          axios.request(axiosOptions)
-            .then((res) => {
-              // Will store the element we are adding to the message attachment payload
-              let newCourseElement = {};
-              const courses = res.data;
-              courses.forEach((course) => {
+        axios.request(axiosOptions)
+          .then((res) => {
+            // Will store the element we are adding to the message attachment payload
+            let newCourseElement = {};
+            const courses = res.data;
+            courses.forEach((course) => {
+              if (user.canvas.subscribedCourses &&
+                user.canvas.subscribedCourses.includes(course.id)) {
                 if (!course.name) {
                   course.name = 'No name for course';
                 }
                 const courseURL = `${CANVAS_URL}courses/${course.id}`;
-
                 newCourseElement = {
                   title: course.name,
                   image_url: `${SERVER_URL}assets/thumbsup.png`,
@@ -150,32 +223,127 @@ module.exports = (controller) => {
                       url: courseURL,
                     },
                     {
-                      title: 'View Assignments',
-                      type: 'web_url',
-                      url: `${courseURL}/assignments`,
+                      title: 'Remove Course',
+                      type: 'postback',
+                      payload: JSON.stringify({
+                        action: 'removeCourse',
+                        course: course.id,
+                      }),
                     },
                   ],
                 };
-                attachment.payload.elements.push(newCourseElement)
-              }); // End of courses.forEach(...)
 
-              // Send courses to user
-              bot.reply(message, { attachment });
-            })
-            .catch((err) => {
-              console.log('Error receiving courses from canvas');
-              console.log(err);
-              bot.reply(message, 'I\'m sorry, I\'m having trouble retrieving ' +
-                'your courses from canvas at the moment.');
-            })
-        } else {
+                attachment.payload.elements.push(newCourseElement);
+              }
+            }); // End of courses.forEach(...)
+
+            // Send courses to user
+            if (attachment.payload.elements.length <= 0) {
+              bot.reply(message, 'You haven\'t subscribed to any courses ');
+            } else {
+              bot.reply(message, 'You\'re subscribed courses are: ');
+              bot.reply(message, { attachment }, (botErr) => {
+                if (botErr) {
+                  console.log('ERROR');
+                  console.log(botErr);
+                }
+              });
+            }
+          })
+          .catch((canvasErr) => {
+            console.log('Error receiving courses from canvas');
+            console.log(canvasErr);
+            bot.reply(message, 'I\'m sorry, I\'m having trouble retrieving ' +
+              'your courses from canvas at the moment.');
+          });
+      } else {
         // No Canvas access token associated with the account
-          console.log('We couldn\'t find a canvas token for this account, please link canvas');
-          bot.reply(message, 'We couldn\'t find a Canvas token for this account, please link Canvas');
-        }
+        console.log('We couldn\'t find a canvas token for this account, please link canvas');
+        bot.reply(message, 'We couldn\'t find a Canvas token for this account, please link Canvas');
       }
     });
   });
+
+
+  controller.hears('^subscribe$', 'message_received', (bot, message) => {
+    const id = message.user;
+    const attachment = {
+      type: 'template',
+      payload: {
+        template_type: 'generic',
+        elements: [],
+      },
+    };
+
+    // Find the matching user, if successful get their Canvas courses
+    controller.storage.students.getByFBSenderID(id, (err, user) => {
+      if (err) {
+        console.log('Error finding user');
+        console.log(err);
+        bot.reply(message, 'I\'m sorry there was an error.');
+      } else if (!user) {
+        console.log('tee eheeeWe couldn\'t find a user for this account, please link your account');
+        bot.reply(message, 'We couldn\'t find a user for this account, please link your account');
+      } else if (user.canvas.token) {
+        const axiosOptions = {
+          url: `${CANVAS_API}courses`,
+          headers: {
+            Authorization: `Bearer ${user.canvas.token}`,
+          },
+          params: {
+            enrollment_state: 'active',
+          },
+        };
+
+        axios.request(axiosOptions)
+          .then((res) => {
+            // Will store the element we are adding to the message attachment payload
+            let newCourseElement = {};
+            const courses = res.data;
+            courses.forEach((course) => {
+              if (!course.name) {
+                course.name = 'No name for course';
+              }
+              newCourseElement = {
+                title: course.name,
+                image_url: `${SERVER_URL}assets/thumbsup.png`,
+                buttons: [
+                  {
+                    title: 'Watch Course',
+                    type: 'postback',
+                    payload: JSON.stringify({
+                      action: 'watchCourse',
+                      course: course.id,
+                    }),
+                  },
+                ],
+              };
+              attachment.payload.elements.push(newCourseElement);
+            }); // End of courses.forEach(...)
+
+            // Send courses to user
+            console.log('replying!');
+            bot.reply(message, { attachment }, (botErr) => {
+              if (botErr) {
+                console.log('ERROR');
+                console.log(botErr);
+              }
+            });
+          })
+          .catch((canvasErr) => {
+            console.log('Error receiving courses from canvas');
+            console.log(canvasErr);
+            bot.reply(message, 'I\'m sorry, I\'m having trouble retrieving ' +
+              'your courses from canvas at the moment.');
+          });
+      } else {
+      // No Canvas access token associated with the account
+        console.log('We couldn\'t find a canvas token for this account, please link canvas');
+        bot.reply(message, 'We couldn\'t find a Canvas token for this account, please link Canvas');
+      }
+    });
+  });
+
 
   // user says anything else
   controller.hears('(.*)', 'message_received', (bot, message) => {
