@@ -4,7 +4,8 @@ import mongoose from 'mongoose';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import passport from 'passport';
-import session from 'express-session';
+// import session from 'express-session';
+import cookieSession from 'cookie-session';
 import flash from 'connect-flash';
 import bodyParser from 'body-parser';
 import config from 'config-heroku';
@@ -34,12 +35,18 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(publicPath));
 
-// Passport setup
-app.use(session({
+// // Passport setup
+// app.use(connect.cookieSession({
+//   secret: 'tobo!',
+//   cookie: { maxAge: 60 * 60 * 1000 }
+// });
+app.use(cookieSession({
   secret: 'secretssecretsarenofun',
-  resave: true,
-  saveUninitialized: true,
+  // resave: true,
+  // saveUninitialized: true,
+  maxAge: 60 * 60 * 1000,
 }));
+
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
 app.use(flash());
