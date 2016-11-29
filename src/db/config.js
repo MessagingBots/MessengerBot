@@ -35,7 +35,6 @@ function getStorage(db, zone) {
   };
 }
 
-
 module.exports = (config) => {
   if (!config || !config.dbURL) {
     throw new Error('You need to provide db url');
