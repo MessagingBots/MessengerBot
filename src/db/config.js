@@ -43,6 +43,8 @@ module.exports = (config) => {
 
   const monk = require('monk')(config.dbURL, {
     autoReconnect: true,
+    reconnectTries: Number.MAX_VALUE,
+    reconnectInterval: 1000,
   });
 
   console.log('connecting to db url');
