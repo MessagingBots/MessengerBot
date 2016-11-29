@@ -46,7 +46,7 @@ app.use(flash());
 
 routes(app, passport);
 
-// Load and run the FB messenger Botkit bot
+// Load and run the FB Messenger Botkit bot
 fbBotServer();
 
 app.listen(process.env.PORT || 3000, (req, res) => {
