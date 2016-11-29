@@ -9,71 +9,20 @@ const CANVAS_URL = config.CANVAS_URL;
 const CANVAS_API = config.CANVAS_API;
 const SERVER_URL = config.SERVER_URL;
 
+const course_colors = ['light_blue.png', 'red.png', 'purple.png', 'green.png', 'pink.png', 'orange.png', 'grey.png', 'cyan.png', 'yellow.jpg', 'blue.jpg'];
+
 // Take in the Botkit controller and attach hears to it
 module.exports = (controller) => {
+
   // user said hello
   controller.hears(['hello'], 'message_received', (bot, message) => {
+    console.log('HEARD HELLO!');
     bot.reply(message, 'Hey there.');
-  });
-
-  // user said hello
-  controller.hears(['add menu'], 'message_received', () => {
-    console.log('Adding persistent menu');
-    request({
-      url: 'https://graph.facebook.com/v2.6/me/thread_settings',
-      qs: { access_token },
-      method: 'POST',
-      json: {
-        setting_type: 'call_to_actions',
-        thread_state: 'existing_thread',
-        call_to_actions: [
-          {
-            type: 'postback',
-            title: 'Home',
-            payload: 'home',
-          },
-          {
-            type: 'postback',
-            title: 'Empty',
-            payload: 'Empty',
-          },
-        ],
-      },
-    }, (err, res) => {
-      if (err) {
-        console.log('Error adding menu');
-        console.log(err);
-      } else if (res.body.error) {
-        console.log('Error');
-        console.log(res.body.console.error);
-      }
-    });
-  });
-
-  controller.hears(['remove menu'], 'message_received', () => {
-    console.log('Removing persistent menu');
-    request({
-      url: 'https://graph.facebook.com/v2.6/me/thread_settings',
-      qs: { access_token },
-      method: 'POST',
-      json: {
-        setting_type: 'call_to_actions',
-        thread_state: 'existing_thread',
-        call_to_actions: [],
-      },
-    }, (err, res) => {
-      if (err) {
-        console.log('Error removing menu');
-        console.log(err);
-      } else if (res.body.error) {
-        console.log('Error');
-        console.log(res.body.console.error);
-      }
-    });
   });
 
   // Send user Account Linking button
   controller.hears(['linking'], 'message_received', (bot, message) => {
+    console.log('HEARD LINKING!');
     const id = message.user;
     const attachment = {
       type: 'template',
@@ -111,7 +60,7 @@ module.exports = (controller) => {
         console.log(err);
         bot.reply(message, 'I\'m sorry there was an error.');
       } else if (!user) {
-        console.log('teedadasd We couldn\'t find a user for this account, please link your account');
+        console.log('We couldn\'t find a user for this account, please link your account');
         bot.reply(message, 'We couldn\'t find a user for this account, please link your account');
       } else if (user.canvas.token) {
         const axiosOptions = {
@@ -128,30 +77,42 @@ module.exports = (controller) => {
           .then((res) => {
             // Will store the element we are adding to the message attachment payload
             let newCourseElement = {};
+            let index = 0;
             const courses = res.data;
             courses.forEach((course) => {
+              console.log(course);
               if (!course.name) {
                 course.name = 'No name for course';
               }
               const courseURL = `${CANVAS_URL}courses/${course.id}`;
-
+              const courseImage = `${SERVER_URL}assets/` + course_colors[index];
               newCourseElement = {
                 title: course.name,
-                image_url: `${SERVER_URL}assets/thumbsup.png`,
+                subtitle : 'Time: ......., Location: ..........',
+                image_url: courseImage,
+                item_url: courseURL,
                 buttons: [
                   {
-                    title: 'Open Course',
-                    type: 'web_url',
-                    url: courseURL,
+                    type: 'postback',
+                    title: 'Announcements',
+                    payload: course.id + '_announcements'
                   },
                   {
-                    title: 'View Assignments',
-                    type: 'web_url',
-                    url: `${courseURL}/assignments`,
+                    type: 'postback',
+                    title: 'Upcomming HW',
+                    payload: course.id+ '_upcomming_hw'
+                  },
+                  {
+                    type: 'postback',
+                    title: 'Grades',
+                    payload: course.id + '_grades'
                   },
                 ],
               };
+
+              // Note: elements is limited to 10. So tere can only a max of 10 courses.
               attachment.payload.elements.push(newCourseElement);
+              index++;
             }); // End of courses.forEach(...)
 
             // Send courses to user
@@ -171,6 +132,7 @@ module.exports = (controller) => {
     });
   });
 
+  // Course subscriptions
   controller.hears('^subscriptions$', 'message_received', (bot, message) => {
     const id = message.user;
     const attachment = {
@@ -264,7 +226,7 @@ module.exports = (controller) => {
     });
   });
 
-
+  // Course subscribe.
   controller.hears('^subscribe$', 'message_received', (bot, message) => {
     const id = message.user;
     const attachment = {
@@ -344,10 +306,9 @@ module.exports = (controller) => {
     });
   });
 
-
   // user says anything else
   controller.hears('(.*)', 'message_received', (bot, message) => {
-    bot.reply(message, `you said ${message.match[1]}`);
+    bot.reply(message, `You said ${message.match[1]}`);
   });
 
   return controller;

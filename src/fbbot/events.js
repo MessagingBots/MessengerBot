@@ -42,11 +42,17 @@ function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
   });
 }
 
+function sendStudentSchedule (){
+
+}
+
+
 // Take in the Botkit controller and attach events to it
 module.exports = (controller) => {
   // This is triggered when a user clicks the send-to-messenger plugin
   controller.on('facebook_optin', (bot, message) => {
     bot.reply(message, 'Welcome, friend');
+
   });
 
   // this is triggered when a user clicks the send-to-messenger plugin
@@ -58,16 +64,37 @@ module.exports = (controller) => {
   // this is triggered when a user clicks the send-to-messenger plugin
   controller.on('facebook_postback', (bot, message) => {
     console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~');
-    console.log('facebook postback occured!');
-    const payload = JSON.parse(message.payload);
+    console.log('Facebook Postback Occured!');
+
+    const payload = message.payload;
     const course = payload.course;
+
+    //console.log(message);
     console.log(payload);
+
     if (payload && payload.action === 'watchCourse') {
       alterUserCourseSubscriptions(message.user, course, controller, true);
+
     } else if (payload && payload.action === 'removeCourse') {
       alterUserCourseSubscriptions(message.user, course, controller, false);
+
+    }else if (payload && payload === 'student_schedule'){
+      console.log('Student Schedule Postback!');
+      bot.reply(message, 'Here are your courses for this semester.');
+
+    }else if (payload && payload === 'upcomming_hw'){
+      console.log('Upcomming HW Postback!');
+      bot.reply(message, 'Here are your upcomming HW from your classes.');
+
+    }else if (payload && payload === ' class_announcements'){
+      console.log('Class Announcements Postback!');
+      bot.reply(message, 'Here are the announcements from your classes.');
+
+    }else if (payload && payload === 'help'){
+        console.log('Help Postback!');
+        bot.reply(message, 'Here are some of the things you can use me for.');
     }
-  });
+    });
 
   return controller;
 };
