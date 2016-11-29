@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import config from 'config-heroku';
 
@@ -31,7 +30,7 @@ function getSchedule(userId, controller) {
               // Use regex to match a course code, i.e. CEN3939
               const courseRe = /([a-z]{3}[0-9]{4}[a-z]?)/i;
               const courseCode = course.course_code;
-              const cleanCourseCode = courseCode.match(courseRe)[0];
+              const cleanCourseCode = courseCode.match(courseRe)[1];
 
               // Build our request options for One UF
               const opts = {
@@ -70,18 +69,11 @@ function getSchedule(userId, controller) {
                     // find user's Canvas section that matches a One UF section
                     canvasSections.some((canvasSection) => {
                       let canvasSectionName = canvasSection.name;
-                      console.log('##########################');
-                      console.log('canvasSection.name');
-                      console.log(canvasSectionName);
-                      console.log('---------------------');
-                      console.log('section.number');
-                      console.log(section.number);
-
                       const sectionRe = /[a-z0-9]*-?([0-9]{4})/i;
                       const cleanedSectionName = canvasSectionName.match(sectionRe);
 
                       if (cleanedSectionName && cleanedSectionName.length > 0) {
-                        canvasSectionName = cleanedSectionName[0];
+                        canvasSectionName = cleanedSectionName[1];
                       }
                       if (canvasSectionName === section.number) {
                         section.meetTimes.forEach((meet) => {
@@ -173,7 +165,6 @@ module.exports = (controller) => {
   // This is triggered when a user clicks the send-to-messenger plugin
   controller.on('facebook_optin', (bot, message) => {
     bot.reply(message, 'Welcome, friend');
-
   });
 
   // This is triggered when a user clicks the send-to-messenger plugin
@@ -185,12 +176,6 @@ module.exports = (controller) => {
   // This is triggered when a user clicks the send-to-messenger plugin
   // payload comes in the JSON form: { action: String, data: Object }
   controller.on('facebook_postback', (bot, message) => {
-
-    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~');
-    console.log('Facebook Postback Occured!');
-    console.log('message');
-    console.log(message);
-
     const payload = JSON.parse(message.payload);
     const { action, data } = payload;
 
@@ -203,9 +188,6 @@ module.exports = (controller) => {
         break;
       case 'getSchedule':
         // Get the user's schedule using Canvas and One UF search
-        console.log('Student Schedule Postback!');
-        bot.reply(message, 'Here are your courses for this semester.');
-
         getSchedule(message.user, controller, bot, message)
           .then((scheduleMsg) => {
             bot.reply(message, scheduleMsg);
@@ -217,40 +199,14 @@ module.exports = (controller) => {
           });
         break;
       case 'getUpcomingHw':
-        console.log('Upcomming HW Postback!');
-        if (!data){
-          bot.reply(message, 'Here are your upcomming HW from all your classes.');
-        }else{
-          bot.reply(message, 'Here are your upcomming HW from all the class with ID = ' + data);
-        }
         // retrieveUpcomingHw
-        // sendMsg(upcommingHw)
+        // sendMsg(UpcomingHw)
         break;
       case 'getAnnouncements':
-        console.log('Class Announcements Postback!');
-        if (!data){
-          bot.reply(message, 'Here are the announcements from all your classes.');
-        }
-        else {
-          bot.reply(message, 'Here are the announcements from the class with ID = ' + data);
-        }
         // retrieveAnnouncemnets
         // sendMsg(announcements)
         break;
-        case 'getGrades':
-          console.log('Class Grades Postback!');
-          if (!data){
-            bot.reply(message, 'Here are the grades from all your classes.');
-          }
-          else {
-            bot.reply(message, 'Here are the grades from the class with ID = ' + data);
-          }
-          // retrieveGrades
-          // sendMsg(grades)
-          break;
       case 'help':
-        console.log('Help Postback!');
-        bot.reply(message, 'Here are some of the things you can use me for.');
         // sendMsg(help)
         break;
       default:
