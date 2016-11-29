@@ -37,6 +37,7 @@ request.post(`https://graph.facebook.com/me/subscribed_apps?access_token=${acces
 );
 
 // Create greeting message when the user tries to talk to our bot
+console.log('Adding gretting menu');
 request({
   url: 'https://graph.facebook.com/v2.6/me/thread_settings',
   qs: { access_token },
@@ -70,22 +71,30 @@ request({
       {
         type: 'postback',
         title: 'Schedule',
-        payload: 'student_schedule',
+        payload: JSON.stringify({
+          action: 'getSchedule',
+        }),
       },
       {
         type: 'postback',
         title: 'Upcomming HW',
-        payload: 'upcomming_hw',
+        payload: JSON.stringify({
+          action: 'getUpcomingHw',
+        }),
       },
       {
         type: 'postback',
         title: 'Announcements',
-        payload: 'class_announcements',
+        payload: JSON.stringify({
+          action: 'getAnnouncements',
+        }),
       },
       {
         type: 'postback',
         title: 'Help',
-        payload: 'help',
+        payload: JSON.stringify({
+          action: 'help',
+        }),
       },
     ],
   },

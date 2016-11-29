@@ -21,7 +21,11 @@ app.set('view engine', 'ejs');
 
 require('./passport/init')(passport);
 
-mongoose.connect(DB_URL);
+mongoose.connect(DB_URL, {
+  autoReconnect: true,
+  reconnectTries: Number.MAX_VALUE,
+  reconnectInterval: 1000,
+});
 
 // Set up express app
 app.use(morgan('dev'));

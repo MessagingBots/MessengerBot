@@ -9,6 +9,31 @@ const CANVAS_API = config.CANVAS_API;
 const SERVER_URL = config.SERVER_URL;
 const fbConfig = config.fb;
 
+module.exports.getUserCanvasCourses = function (userCanvasToken) {
+  return new Promise((resolve, reject) => {
+    const axiosOptions = {
+      url: `${CANVAS_API}courses?include=sections`,
+      headers: {
+        Authorization: `Bearer ${userCanvasToken}`,
+      },
+      params: {
+        enrollment_state: 'active',
+      },
+    };
+
+    axios.request(axiosOptions)
+      .then((res) => {
+        const courses = res.data;
+        resolve(courses);
+      })
+      .catch((err) => {
+        console.log('Error retrieving courses');
+        console.log(err);
+        reject(err);
+      });
+  });
+};
+
 /*
  * Call the Send API. The message data goes in the body. If successful, we'll
  * get the message id in a response
@@ -322,8 +347,8 @@ function sendTypingOff(recipientId) {
 }
 
 
-export {
-  callSendAPI, sendAccountLinking, sendTextMessage,
-  sendFileMessage, sendButtonMessage, sendQuickReply, sendTypingOn,
-  sendReadReceipt, sendTypingOff, sendCourses,
-};
+// export {
+//   callSendAPI, sendAccountLinking, sendTextMessage,
+//   sendFileMessage, sendButtonMessage, sendQuickReply, sendTypingOn,
+//   sendReadReceipt, sendTypingOff, sendCourses,
+// };

@@ -35,13 +35,19 @@ function getStorage(db, zone) {
   };
 }
 
-
 module.exports = (config) => {
   if (!config || !config.dbURL) {
     throw new Error('You need to provide db url');
   }
 
-  const monk = require('monk')(config.dbURL);
+  const monk = require('monk')(config.dbURL, {
+    autoReconnect: true,
+    reconnectTries: Number.MAX_VALUE,
+    reconnectInterval: 1000,
+  });
+
+  console.log('connecting to db url');
+  console.log(config.dbURL);
   const storage = {};
 
   // The below are needed for Botkit to let us use storage

@@ -13,7 +13,6 @@ const course_colors = ['light_blue.png', 'red.png', 'purple.png', 'green.png', '
 
 // Take in the Botkit controller and attach hears to it
 module.exports = (controller) => {
-
   // user said hello
   controller.hears(['hello'], 'message_received', (bot, message) => {
     console.log('HEARD HELLO!');
@@ -43,7 +42,7 @@ module.exports = (controller) => {
 
   // Send user their current courses
   controller.hears('^courses$', 'message_received', (bot, message) => {
-    console.log('HEARD CUORSES!');
+    console.log('HEARD COURSES!');
     const id = message.user;
     const attachment = {
       type: 'template',
@@ -78,41 +77,53 @@ module.exports = (controller) => {
             // Will store the element we are adding to the message attachment payload
             let newCourseElement = {};
             let index = 0;
+
             const courses = res.data;
             courses.forEach((course) => {
               console.log(course);
+
               if (!course.name) {
                 course.name = 'No name for course';
               }
               const courseURL = `${CANVAS_URL}courses/${course.id}`;
               const courseImage = `${SERVER_URL}assets/` + course_colors[index];
-              newCourseElement = {
-                title: course.name,
-                subtitle : 'Time: ......., Location: ..........',
-                image_url: courseImage,
-                item_url: courseURL,
-                buttons: [
-                  {
-                    type: 'postback',
-                    title: 'Announcements',
-                    payload: course.id + '_announcements'
-                  },
-                  {
-                    type: 'postback',
-                    title: 'Upcomming HW',
-                    payload: course.id+ '_upcomming_hw'
-                  },
-                  {
-                    type: 'postback',
-                    title: 'Grades',
-                    payload: course.id + '_grades'
-                  },
-                ],
-              };
 
-              // Note: elements is limited to 10. So tere can only a max of 10 courses.
-              attachment.payload.elements.push(newCourseElement);
-              index++;
+              newCourseElement = {
+               title: course.name,
+               subtitle : 'Time: ......., Location: ..........',
+               image_url: courseImage,
+               item_url: courseURL,
+               buttons: [
+                 {
+                   type: 'postback',
+                   title: 'Announcements',
+                   payload: JSON.stringify({
+                     action: 'getAnnouncements',
+                     data: course.id,
+                   }),
+                 },
+                 {
+                   type: 'postback',
+                   title: 'Upcomming HW',
+                   payload: JSON.stringify({
+                     action: 'getUpcomingHw',
+                     data: course.id,
+                   }),
+                 },
+                 {
+                   type: 'postback',
+                   title: 'Grades',
+                   payload: JSON.stringify({
+                     action: 'getGrades',
+                     data: course.id,
+                   }),
+                 },
+               ],
+             };
+
+             // Note: elements is limited to 10. So tere can only a max of 10 courses.
+             attachment.payload.elements.push(newCourseElement);
+             index++;
             }); // End of courses.forEach(...)
 
             // Send courses to user
@@ -132,7 +143,7 @@ module.exports = (controller) => {
     });
   });
 
-  // Course subscriptions
+   // Course subscriptions
   controller.hears('^subscriptions$', 'message_received', (bot, message) => {
     const id = message.user;
     const attachment = {
@@ -189,7 +200,9 @@ module.exports = (controller) => {
                       type: 'postback',
                       payload: JSON.stringify({
                         action: 'removeCourse',
-                        course: course.id,
+                        data: {
+                          course: course.id,
+                        },
                       }),
                     },
                   ],
@@ -226,7 +239,7 @@ module.exports = (controller) => {
     });
   });
 
-  // Course subscribe.
+  // Course subscribe
   controller.hears('^subscribe$', 'message_received', (bot, message) => {
     const id = message.user;
     const attachment = {
@@ -244,7 +257,7 @@ module.exports = (controller) => {
         console.log(err);
         bot.reply(message, 'I\'m sorry there was an error.');
       } else if (!user) {
-        console.log('tee eheeeWe couldn\'t find a user for this account, please link your account');
+        console.log('We couldn\'t find a user for this account, please link your account');
         bot.reply(message, 'We couldn\'t find a user for this account, please link your account');
       } else if (user.canvas.token) {
         const axiosOptions = {
@@ -257,6 +270,7 @@ module.exports = (controller) => {
           },
         };
 
+        // Request the user's canvas coruses
         axios.request(axiosOptions)
           .then((res) => {
             // Will store the element we are adding to the message attachment payload
@@ -275,7 +289,9 @@ module.exports = (controller) => {
                     type: 'postback',
                     payload: JSON.stringify({
                       action: 'watchCourse',
-                      course: course.id,
+                      data: {
+                        course: course.id,
+                      },
                     }),
                   },
                 ],
@@ -307,9 +323,9 @@ module.exports = (controller) => {
   });
 
   // user says anything else
-  controller.hears('(.*)', 'message_received', (bot, message) => {
-    bot.reply(message, `You said ${message.match[1]}`);
-  });
+  // controller.hears('(.*)', 'message_received', (bot, message) => {
+  //   bot.reply(message, `You said ${message.match[1]}`);
+  // });
 
   return controller;
 };
