@@ -9,14 +9,6 @@ const CANVAS_URL = config.CANVAS_URL;
 const CANVAS_API = config.CANVAS_API;
 const SERVER_URL = config.SERVER_URL;
 
-function buildCourseElement(title, image_url , buttons) {
-  return {
-    title,
-    image_url,
-    buttons,
-  }
-}
-
 // Take in the Botkit controller and attach hears to it
 module.exports = (controller) => {
   // user said hello
@@ -120,7 +112,7 @@ module.exports = (controller) => {
 
   // Send user their current courses
   controller.hears('^courses$', 'message_received', (bot, message) => {
-    console.log('HEARD CUORSES!');
+    console.log('HEARD COURSES!');
     const id = message.user;
     const attachment = {
       type: 'template',
@@ -159,24 +151,24 @@ module.exports = (controller) => {
               if (!course.name) {
                 course.name = 'No name for course';
               }
-
               const courseURL = `${CANVAS_URL}courses/${course.id}`;
-              const imageUrl = `${SERVER_URL}assets/thumbsup.png`;
-              const buttons = [
-                {
-                  title: 'Open Course',
-                  type: 'web_url',
-                  url: courseURL,
-                },
-                {
-                  title: 'View Assignments',
-                  type: 'web_url',
-                  url: `${courseURL}/assignments`,
-                },
-              ];
 
-              newCourseElement = buildCourseElement(course.name, imageUrl, buttons);
-
+              newCourseElement = {
+                title: course.name,
+                image_url: `${SERVER_URL}assets/thumbsup.png`,
+                buttons: [
+                  {
+                    title: 'Open Course',
+                    type: 'web_url',
+                    url: courseURL,
+                  },
+                  {
+                    title: 'View Assignments',
+                    type: 'web_url',
+                    url: `${courseURL}/assignments`,
+                  },
+                ],
+              };
               attachment.payload.elements.push(newCourseElement);
             }); // End of courses.forEach(...)
 
@@ -238,28 +230,29 @@ module.exports = (controller) => {
                 if (!course.name) {
                   course.name = 'No name for course';
                 }
-
                 const courseURL = `${CANVAS_URL}courses/${course.id}`;
-                const imageUrl = `${SERVER_URL}assets/thumbsup.png`;
-                const buttons = [
-                  {
-                    title: 'Open Course',
-                    type: 'web_url',
-                    url: courseURL,
-                  },
-                  {
-                    title: 'Remove Course',
-                    type: 'postback',
-                    payload: JSON.stringify({
-                      action: 'removeCourse',
-                      data: {
-                        course: course.id,
-                      },
-                    }),
-                  },
-                ];
+                newCourseElement = {
+                  title: course.name,
+                  image_url: `${SERVER_URL}assets/thumbsup.png`,
+                  buttons: [
+                    {
+                      title: 'Open Course',
+                      type: 'web_url',
+                      url: courseURL,
+                    },
+                    {
+                      title: 'Remove Course',
+                      type: 'postback',
+                      payload: JSON.stringify({
+                        action: 'removeCourse',
+                        data: {
+                          course: course.id,
+                        },
+                      }),
+                    },
+                  ],
+                };
 
-                newCourseElement = buildCourseElement(course.name, imageUrl, buttons);
                 attachment.payload.elements.push(newCourseElement);
               }
             }); // End of courses.forEach(...)
@@ -309,7 +302,7 @@ module.exports = (controller) => {
         console.log(err);
         bot.reply(message, 'I\'m sorry there was an error.');
       } else if (!user) {
-        console.log('tee eheeeWe couldn\'t find a user for this account, please link your account');
+        console.log('We couldn\'t find a user for this account, please link your account');
         bot.reply(message, 'We couldn\'t find a user for this account, please link your account');
       } else if (user.canvas.token) {
         const axiosOptions = {
@@ -322,6 +315,7 @@ module.exports = (controller) => {
           },
         };
 
+        // Request the user's canvas coruses
         axios.request(axiosOptions)
           .then((res) => {
             // Will store the element we are adding to the message attachment payload
@@ -331,22 +325,22 @@ module.exports = (controller) => {
               if (!course.name) {
                 course.name = 'No name for course';
               }
-
-              const imageUrl = `${SERVER_URL}assets/thumbsup.png`;
-              const buttons = [
-                {
-                  title: 'Watch Course',
-                  type: 'postback',
-                  payload: JSON.stringify({
-                    action: 'watchCourse',
-                    data: {
-                      course: course.id,
-                    },
-                  }),
-                },
-              ];
-
-              newCourseElement = buildCourseElement(course.name, imageUrl, buttons);
+              newCourseElement = {
+                title: course.name,
+                image_url: `${SERVER_URL}assets/thumbsup.png`,
+                buttons: [
+                  {
+                    title: 'Watch Course',
+                    type: 'postback',
+                    payload: JSON.stringify({
+                      action: 'watchCourse',
+                      data: {
+                        course: course.id,
+                      },
+                    }),
+                  },
+                ],
+              };
               attachment.payload.elements.push(newCourseElement);
             }); // End of courses.forEach(...)
 
@@ -375,9 +369,9 @@ module.exports = (controller) => {
 
 
   // user says anything else
-  controller.hears('(.*)', 'message_received', (bot, message) => {
-    bot.reply(message, `you said ${message.match[1]}`);
-  });
+  // controller.hears('(.*)', 'message_received', (bot, message) => {
+  //   bot.reply(message, `you said ${message.match[1]}`);
+  // });
 
   return controller;
 };

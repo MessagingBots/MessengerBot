@@ -1,5 +1,114 @@
+import axios from 'axios';
+import config from 'config-heroku';
+
+import sendUtils from './sendUtils';
+
+const ONE_COURSE_API = config.ONE_COURSE_API;
+
+function getSchedule(userId, controller) {
+  return new Promise((resolve, reject) => {
+    controller.storage.students.getByFBSenderID(userId, (err, user) => {
+      if (err) {
+        console.log('Error finding user');
+        console.log(err);
+        reject('I\'m sorry there was an error.');
+      } else if (!user) {
+        console.log('We couldn\'t find a user for this account, please link your account');
+        reject('We couldn\'t find a user for this account, please link your account');
+      } else if (user.canvas.token) {
+        // Get the user's courses on Canvas
+        sendUtils.getUserCanvasCourses(user.canvas.token)
+          .then((courses) => {
+            // Build promises to query One UF course for class meeting times
+            const promises = courses.map((course) => {
+              if (!course.name) {
+                course.name = 'No name for course';
+              }
+
+              // Keep the sections we get from canvas
+              const canvasSections = course.sections;
+              // Use regex to match a course code, i.e. CEN3939
+              const courseRe = /([a-z]{3}[0-9]{4})/i;
+              const courseCode = course.course_code;
+              const cleanCourseCode = courseCode.match(courseRe)[0];
+              // Build our request options for One UF
+              const opts = {
+                url: `${ONE_COURSE_API}${cleanCourseCode}`,
+                // attach the canvas sections for use later
+                transformResponse: [function (data) {
+                  const JSONdata = JSON.parse(data);
+                  JSONdata.canvasSections = canvasSections;
+                  return JSONdata;
+                }],
+              };
+
+              return axios.request(opts);
+            }); // const promises = courses.map...
+
+            axios.all(promises)
+              .then((res) => {
+                // returnMessage is the final string of Course codes and times
+                let returnMessage = '';
+                const resDatas = res.map(r => r.data);
+
+                // For each One UF course...
+                resDatas.forEach((course) => {
+                  // Extract the relevant data from the JSON
+                  const matchedCourse = JSON.parse(course[0].COURSES)[0];
+                  const courseCode = matchedCourse.code;
+                  // Get the sections from One UF
+                  const sections = matchedCourse.sections;
+                  // Get the canvas sections we attached earlier
+                  const canvasSections = course.canvasSections;
+                  let courseSectionTimes = '';
+                  returnMessage += `${courseCode}\n`;
+
+                  sections.forEach((section) => {
+                    // find user's Canvas section that matches a One UF section
+                    canvasSections.some((canvasSection) => {
+                      if (canvasSection.name === section.number) {
+                        section.meetTimes.forEach((meet) => {
+                          // Build string of meeting times for the section
+                          courseSectionTimes += `${meet.meetDays}: ${meet.meetTimeBegin} - ${meet.meetTimeEnd}\n`;
+                        });
+                        return true;
+                      }
+                    });
+                  });
+
+                  if (courseSectionTimes === '') {
+                    courseSectionTimes = 'No times found';
+                  }
+
+                  // Attach the section times to the return message
+                  returnMessage += `${courseSectionTimes}\n`;
+                });
+
+                // Finally, send it all back!
+                resolve(returnMessage);
+              })
+              .catch((e) => {
+                console.log('There was an error loading One UF courses');
+                console.log(e);
+                reject(e);
+              });
+          })
+            .catch((error) => {
+              console.log('Error getting courses');
+              console.log(error);
+              reject(error);
+            });
+      } // else if (user.canvas.token)...
+      else {
+        console.log('We couldn\'t find a token for this account, please link your account');
+        reject('We couldn\'t find a token for this account, please link your account');
+      }
+    });
+  });
+}
 
 function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
+  // first check session
   controller.storage.students.getByFBSenderID(userId, (err, foundUser) => {
     if (err) {
       console.log('Error finding user');
@@ -49,13 +158,13 @@ module.exports = (controller) => {
     bot.reply(message, 'Welcome, friend');
   });
 
-  // this is triggered when a user clicks the send-to-messenger plugin
+  // This is triggered when a user clicks the send-to-messenger plugin
   controller.on('message_delivered', (bot, message) => {
     console.log(message);
     console.log('message delivered');
   });
 
-  // this is triggered when a user clicks the send-to-messenger plugin
+  // This is triggered when a user clicks the send-to-messenger plugin
   // payload comes in the JSON form: { action: String, data: Object }
   controller.on('facebook_postback', (bot, message) => {
     console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~');
@@ -70,11 +179,19 @@ module.exports = (controller) => {
         alterUserCourseSubscriptions(message.user, data.course, controller, true);
         break;
       case 'removeCourse':
-        alterUserCourseSubscriptions(message.user, payload.data.course, controller, false);
+        alterUserCourseSubscriptions(message.user, data.course, controller, false);
         break;
       case 'getSchedule':
-        // retrieveUserSchedule
-        // sendMsg(userSchedule)
+        // Get the user's schedule using Canvas and One UF search
+        getSchedule(message.user, controller, bot, message)
+          .then((scheduleMsg) => {
+            bot.reply(message, scheduleMsg);
+          })
+          .catch((e) => {
+            console.log('Error');
+            console.log(e);
+            bot.reply(message, e);
+          });
         break;
       case 'getUpcomingHw':
         // retrieveUpcomingHw

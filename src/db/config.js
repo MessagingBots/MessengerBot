@@ -41,7 +41,12 @@ module.exports = (config) => {
     throw new Error('You need to provide db url');
   }
 
-  const monk = require('monk')(config.dbURL);
+  const monk = require('monk')(config.dbURL, {
+    autoReconnect: true,
+  });
+
+  console.log('connecting to db url');
+  console.log(config.dbURL);
   const storage = {};
 
   // The below are needed for Botkit to let us use storage
