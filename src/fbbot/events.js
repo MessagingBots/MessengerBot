@@ -28,9 +28,10 @@ function getSchedule(userId, controller) {
               // Keep the sections we get from canvas
               const canvasSections = course.sections;
               // Use regex to match a course code, i.e. CEN3939
-              const courseRe = /([a-z]{3}[0-9]{4})/i;
+              const courseRe = /([a-z]{3}[0-9]{4}[a-z]?)/i;
               const courseCode = course.course_code;
               const cleanCourseCode = courseCode.match(courseRe)[0];
+
               // Build our request options for One UF
               const opts = {
                 url: `${ONE_COURSE_API}${cleanCourseCode}`,
@@ -43,7 +44,7 @@ function getSchedule(userId, controller) {
               };
 
               return axios.request(opts);
-            }); // const promises = courses.map...
+            }); // end of const promises = courses.map(...)
 
             axios.all(promises)
               .then((res) => {
@@ -55,6 +56,7 @@ function getSchedule(userId, controller) {
                 resDatas.forEach((course) => {
                   // Extract the relevant data from the JSON
                   const matchedCourse = JSON.parse(course[0].COURSES)[0];
+                  // LOG HERE
                   const courseCode = matchedCourse.code;
                   // Get the sections from One UF
                   const sections = matchedCourse.sections;
@@ -66,7 +68,21 @@ function getSchedule(userId, controller) {
                   sections.forEach((section) => {
                     // find user's Canvas section that matches a One UF section
                     canvasSections.some((canvasSection) => {
-                      if (canvasSection.name === section.number) {
+                      let canvasSectionName = canvasSection.name;
+                      console.log('##########################');
+                      console.log('canvasSection.name');
+                      console.log(canvasSectionName);
+                      console.log('---------------------');
+                      console.log('section.number');
+                      console.log(section.number);
+
+                      const sectionRe = /[a-z0-9]*-?([0-9]{4})/i;
+                      const cleanedSectionName = canvasSectionName.match(sectionRe);
+
+                      if (cleanedSectionName && cleanedSectionName.length > 0) {
+                        canvasSectionName = cleanedSectionName[0];
+                      }
+                      if (canvasSectionName === section.number) {
                         section.meetTimes.forEach((meet) => {
                           // Build string of meeting times for the section
                           courseSectionTimes += `${meet.meetDays}: ${meet.meetTimeBegin} - ${meet.meetTimeEnd}\n`;

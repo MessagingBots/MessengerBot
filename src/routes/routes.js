@@ -5,7 +5,7 @@ import login from './login';
 
 const DB_URL = config.dbURL;
 const API_URL = config.API_URL;
-const storage = require('../db/config')({ dbURL: DB_URL });
+
 
 // Route middleware to make sure a user is logged in
 function isLoggedIn(req, res, next) {
@@ -17,7 +17,7 @@ function isLoggedIn(req, res, next) {
   res.redirect('/login');
 }
 
-module.exports = (app, passport) => {
+module.exports = (app, passport, storage) => {
   app.get('/', (req, res) => {
     res.render('index.ejs');
   });
@@ -42,13 +42,6 @@ module.exports = (app, passport) => {
 
   app.post('/api/subscribe/:courses', (req, res) => {
     const courses = req.params.courses.split(',');
-    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``');
-    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``');
-    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``');
-    console.log('storage is');
-    console.log(storage);
-    console.log('courses are:');
-    console.log(courses);
     res.send('your courses are ' +
       courses.map(course => course).join('\n'));
   });
@@ -66,20 +59,17 @@ module.exports = (app, passport) => {
     console.log('CANVAS!!');
     console.log('req.query');
     console.log(req.query);
-    res.send({success: 'succ'});
+    res.send({
+      success: 'succ',
+    });
   });
 
-  // FB messenger both FB linking step 1
-  // @TODO!
-  // SEE IF WE CAN TIE STATE HERE LIKE WE CAN IN CANVAS
-  // https://canvas.instructure.com/doc/api/file.oauth.html
+  // FB messenger bot FB linking step 1
   app.get('/api/auth/facebook', (req, res, next) => {
     let state = '';
     if (req.query.fromBot) {
       // Set FB state to be fromBot so we know this came from Messenger
       state = 'fromBot';
-      const senderId = req.query.senderId;
-      const pat = req.query.pat;
       const authCode = '1234567890';
       req.session.account_linking_token = req.query.account_linking_token;
       req.session.redirectURI = req.query.redirect_uri;

@@ -12,8 +12,10 @@ import config from 'config-heroku';
 
 import routes from './routes/routes';
 import fbBotServer from './fbbot/server';
+import canvasSubscriptionService from './canvasSubscriptionService';
 
 const DB_URL = config.dbURL;
+const storage = require('./db/config')({ dbURL: DB_URL });
 const publicPath = path.resolve('public');
 const app = express();
 
@@ -21,12 +23,6 @@ app.set('views', `${publicPath}/views`);
 app.set('view engine', 'ejs');
 
 require('./passport/init')(passport);
-
-mongoose.connect(DB_URL, {
-  autoReconnect: true,
-  reconnectTries: Number.MAX_VALUE,
-  reconnectInterval: 1000,
-});
 
 // Set up express app
 app.use(morgan('dev'));
@@ -44,7 +40,9 @@ app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
 app.use(flash());
 
-routes(app, passport);
+routes(app, passport, storage);
+
+canvasSubscriptionService(storage);
 
 // Load and run the FB Messenger Botkit bot
 fbBotServer();

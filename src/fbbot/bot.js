@@ -186,3 +186,4 @@ const handler = (obj) => {
 };
 
 exports.handler = handler;
+exports.controller = controller;
