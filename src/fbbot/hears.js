@@ -2,6 +2,8 @@ import axios from 'axios';
 import config from 'config-heroku';
 import request from 'request';
 
+import sendUtils from './sendUtils';
+
 const access_token = config.fb.pageAccessToken;
 const verify_token = config.fb.verifyToken;
 const API_URL = config.API_URL;
@@ -129,24 +131,12 @@ module.exports = (controller) => {
         console.log(err);
         bot.reply(message, 'I\'m sorry there was an error.');
       } else if (!user) {
-        console.log('teedadasd We couldn\'t find a user for this account, please link your account');
+        console.log('We couldn\'t find a user for this account, please link your account');
         bot.reply(message, 'We couldn\'t find a user for this account, please link your account');
       } else if (user.canvas.token) {
-        const axiosOptions = {
-          url: `${CANVAS_API}courses`,
-          headers: {
-            Authorization: `Bearer ${user.canvas.token}`,
-          },
-          params: {
-            enrollment_state: 'active',
-          },
-        };
-
-        axios.request(axiosOptions)
-          .then((res) => {
-            // Will store the element we are adding to the message attachment payload
+        sendUtils.getUserCanvasCourses(user.canvas.token)
+          .then((courses) => {
             let newCourseElement = {};
-            const courses = res.data;
             courses.forEach((course) => {
               if (!course.name) {
                 course.name = 'No name for course';
@@ -209,21 +199,10 @@ module.exports = (controller) => {
         console.log('We couldn\'t find a user for this account, please link your account');
         bot.reply(message, 'We couldn\'t find a user for this account, please link your account');
       } else if (user.canvas.token) {
-        const axiosOptions = {
-          url: `${CANVAS_API}courses`,
-          headers: {
-            Authorization: `Bearer ${user.canvas.token}`,
-          },
-          params: {
-            enrollment_state: 'active',
-          },
-        };
-
-        axios.request(axiosOptions)
-          .then((res) => {
+        sendUtils.getUserCanvasCourses(user.canvas.token)
+          .then((courses) => {
             // Will store the element we are adding to the message attachment payload
             let newCourseElement = {};
-            const courses = res.data;
             courses.forEach((course) => {
               if (user.canvas.subscribedCourses &&
                 user.canvas.subscribedCourses.includes(course.id)) {
@@ -305,22 +284,10 @@ module.exports = (controller) => {
         console.log('We couldn\'t find a user for this account, please link your account');
         bot.reply(message, 'We couldn\'t find a user for this account, please link your account');
       } else if (user.canvas.token) {
-        const axiosOptions = {
-          url: `${CANVAS_API}courses`,
-          headers: {
-            Authorization: `Bearer ${user.canvas.token}`,
-          },
-          params: {
-            enrollment_state: 'active',
-          },
-        };
-
-        // Request the user's canvas coruses
-        axios.request(axiosOptions)
-          .then((res) => {
+        sendUtils.getUserCanvasCourses(user.canvas.token)
+          .then((courses) => {
             // Will store the element we are adding to the message attachment payload
             let newCourseElement = {};
-            const courses = res.data;
             courses.forEach((course) => {
               if (!course.name) {
                 course.name = 'No name for course';

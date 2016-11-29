@@ -167,10 +167,6 @@ module.exports = (controller) => {
   // This is triggered when a user clicks the send-to-messenger plugin
   // payload comes in the JSON form: { action: String, data: Object }
   controller.on('facebook_postback', (bot, message) => {
-    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~');
-    console.log('facebook postback occured!');
-    console.log('message');
-    console.log(message);
     const payload = JSON.parse(message.payload);
     const { action, data } = payload;
 
