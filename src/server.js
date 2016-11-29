@@ -35,15 +35,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(publicPath));
 
-// // Passport setup
-// app.use(connect.cookieSession({
-//   secret: 'tobo!',
-//   cookie: { maxAge: 60 * 60 * 1000 }
-// });
 app.use(cookieSession({
   secret: 'secretssecretsarenofun',
-  // resave: true,
-  // saveUninitialized: true,
   maxAge: 60 * 60 * 1000,
 }));
 
