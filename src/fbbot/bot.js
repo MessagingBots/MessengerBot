@@ -36,7 +36,8 @@ request.post(`https://graph.facebook.com/me/subscribed_apps?access_token=${acces
   }
 );
 
-// Create greeting message
+// Create greeting message when the user tries to talk to our bot
+console.log('Adding gretting menu');
 request({
   url: 'https://graph.facebook.com/v2.6/me/thread_settings',
   qs: { access_token },
@@ -44,7 +45,7 @@ request({
   json: {
     setting_type: 'greeting',
     greeting: {
-      text: 'Welcome! I\'m looking forward to helping you keep track of Canvas',
+      text: 'Welcome! I\'m looking forward to helping you keep track of Canvas. \n Type \'courses\', \'schedule\', or \'help\' to interact with me.',
     },
   },
 }, (err, res) => {
@@ -57,8 +58,59 @@ request({
   }
 });
 
+// Add persisten Menu once the user tries to talk to our bot.
+console.log('Adding persistent menu');
+request({
+  url: 'https://graph.facebook.com/v2.6/me/thread_settings',
+  qs: { access_token },
+  method: 'POST',
+  json: {
+    setting_type: 'call_to_actions',
+    thread_state: 'existing_thread',
+    call_to_actions: [
+      {
+        type: 'postback',
+        title: 'Schedule',
+        payload: JSON.stringify({
+          action: 'getSchedule',
+        }),
+      },
+      {
+        type: 'postback',
+        title: 'Upcomming HW',
+        payload: JSON.stringify({
+          action: 'getUpcomingHw',
+        }),
+      },
+      {
+        type: 'postback',
+        title: 'Announcements',
+        payload: JSON.stringify({
+          action: 'getAnnouncements',
+        }),
+      },
+      {
+        type: 'postback',
+        title: 'Help',
+        payload: JSON.stringify({
+          action: 'help',
+        }),
+      },
+    ],
+  },
+}, (err, res) => {
+  if (err) {
+    console.log('Error adding menu');
+    console.log(err);
+  } else if (res.body.error) {
+    console.log('Error');
+    console.log(res.body.console.error);
+  }
+});
+
 // Attach our events to the controller
 controller = require('./events')(controller);
+
 // Attach 'hears' to the controller
 controller = require('./hears')(controller);
 

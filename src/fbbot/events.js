@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import config from 'config-heroku';
 
@@ -172,6 +173,7 @@ module.exports = (controller) => {
   // This is triggered when a user clicks the send-to-messenger plugin
   controller.on('facebook_optin', (bot, message) => {
     bot.reply(message, 'Welcome, friend');
+
   });
 
   // This is triggered when a user clicks the send-to-messenger plugin
@@ -183,6 +185,12 @@ module.exports = (controller) => {
   // This is triggered when a user clicks the send-to-messenger plugin
   // payload comes in the JSON form: { action: String, data: Object }
   controller.on('facebook_postback', (bot, message) => {
+
+    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~');
+    console.log('Facebook Postback Occured!');
+    console.log('message');
+    console.log(message);
+
     const payload = JSON.parse(message.payload);
     const { action, data } = payload;
 
@@ -195,6 +203,9 @@ module.exports = (controller) => {
         break;
       case 'getSchedule':
         // Get the user's schedule using Canvas and One UF search
+        console.log('Student Schedule Postback!');
+        bot.reply(message, 'Here are your courses for this semester.');
+
         getSchedule(message.user, controller, bot, message)
           .then((scheduleMsg) => {
             bot.reply(message, scheduleMsg);
@@ -206,14 +217,40 @@ module.exports = (controller) => {
           });
         break;
       case 'getUpcomingHw':
+        console.log('Upcomming HW Postback!');
+        if (!data){
+          bot.reply(message, 'Here are your upcomming HW from all your classes.');
+        }else{
+          bot.reply(message, 'Here are your upcomming HW from all the class with ID = ' + data);
+        }
         // retrieveUpcomingHw
-        // sendMsg(UpcomingHw)
+        // sendMsg(upcommingHw)
         break;
       case 'getAnnouncements':
+        console.log('Class Announcements Postback!');
+        if (!data){
+          bot.reply(message, 'Here are the announcements from all your classes.');
+        }
+        else {
+          bot.reply(message, 'Here are the announcements from the class with ID = ' + data);
+        }
         // retrieveAnnouncemnets
         // sendMsg(announcements)
         break;
+        case 'getGrades':
+          console.log('Class Grades Postback!');
+          if (!data){
+            bot.reply(message, 'Here are the grades from all your classes.');
+          }
+          else {
+            bot.reply(message, 'Here are the grades from the class with ID = ' + data);
+          }
+          // retrieveGrades
+          // sendMsg(grades)
+          break;
       case 'help':
+        console.log('Help Postback!');
+        bot.reply(message, 'Here are some of the things you can use me for.');
         // sendMsg(help)
         break;
       default:
