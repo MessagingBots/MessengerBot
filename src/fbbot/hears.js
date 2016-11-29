@@ -69,7 +69,6 @@ module.exports = (controller) => {
             let newCourseElement = {};
             let index = 0;
 
-            const courses = res.data;
             courses.forEach((course) => {
               console.log(course);
 
