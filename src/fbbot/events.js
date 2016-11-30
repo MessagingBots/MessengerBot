@@ -132,12 +132,15 @@ function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
 
       // Is the user subscribing or removing a course?
       if (subscribe) {
-        if (subscribedCourses.includes(course)) {
+        if (subscribedCourses.some(subscribedCourse => subscribedCourse.id === course.id)) {
           return;
         }
         subscribedCourses.push(course);
       } else {
-        const indexOfCourse = subscribedCourses.indexOf(course);
+        const indexOfCourse = subscribedCourses.map(subscribedCourse =>
+          subscribedCourse.id
+        ).indexOf(course.id);
+        // const indexOfCourse = subscribedCourses.indexOf(course);
         if (indexOfCourse > -1) {
           subscribedCourses.splice(indexOfCourse, 1);
         }
@@ -156,42 +159,38 @@ function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
             console.log(innerUser);
           }
         });
-      }
-    });
-  }
+    }
+  });
+}
 
   // Take in the Botkit controller and attach events to it
-  module.exports = (controller) => {
-    // This is triggered when a user clicks the send-to-messenger plugin
-    controller.on('facebook_optin', (bot, message) => {
-      bot.reply(message, 'Welcome, friend');
-    });
+module.exports = (controller) => {
+  // This is triggered when a user clicks the send-to-messenger plugin
+  controller.on('facebook_optin', (bot, message) => {
+    bot.reply(message, 'Welcome, friend');
+  });
 
-    // This is triggered when a user clicks the send-to-messenger plugin
-    controller.on('message_delivered', (bot, message) => {
-      console.log(message);
-      console.log('message delivered');
-    });
+  // This is triggered when a user clicks the send-to-messenger plugin
+  controller.on('message_delivered', (bot, message) => {
+    console.log(message);
+    console.log('message delivered');
+  });
 
-    // This is triggered when a user clicks the send-to-messenger plugin
-    // payload comes in the JSON form: { action: String, data: Object }
-    controller.on('facebook_postback', (bot, message) => {
-      console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~');
-      console.log('Facebook Postback Occured!');
-      console.log('message');
-      console.log(message);
+  // This is triggered when a user clicks the send-to-messenger plugin
+  // payload comes in the JSON form: { action: String, data: Object }
+  controller.on('facebook_postback', (bot, message) => {
+    console.log(message);
+    const payload = JSON.parse(message.payload);
+    const { action, data } = payload;
 
-      const payload = JSON.parse(message.payload);
-      const { action, data } = payload;
-
-      switch (action) {
-        case 'watchCourse':
+    switch (action) {
+      case 'watchCourse':
         alterUserCourseSubscriptions(message.user, data.course, controller, true);
         break;
-        case 'removeCourse':
+      case 'removeCourse':
         alterUserCourseSubscriptions(message.user, data.course, controller, false);
         break;
-        case 'getSchedule':
+      case 'getSchedule':
         // Get the user's schedule using Canvas and One UF search
         console.log('Student Schedule Postback!');
         bot.reply(message, 'Here are your courses for this semester.');
@@ -206,46 +205,46 @@ function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
           bot.reply(message, e);
         });
         break;
-        case 'getUpcomingHw':
+      case 'getUpcomingHw':
         console.log('Upcomming HW Postback!');
-        if (!data){
+        if (!data) {
           bot.reply(message, 'Here are your upcomming HW from all your classes.');
-        }else{
-          bot.reply(message, 'Here are your upcomming HW from all the class with ID = ' + data);
+        } else {
+          bot.reply(message, `Here are your upcomming HW from all the class with ID = ${data}`);
         }
         // retrieveUpcomingHw
         // sendMsg(upcommingHw)
         break;
-        case 'getAnnouncements':
+      case 'getAnnouncements':
         console.log('Class Announcements Postback!');
-        if (!data){
+        if (!data) {
           bot.reply(message, 'Here are the announcements from all your classes.');
-        }
-        else {
-          bot.reply(message, 'Here are the announcements from the class with ID = ' + data);
+        } else {
+          bot.reply(message, `Here are the announcements from the class with ID = ${data}`);
         }
         // retrieveAnnouncemnets
         // sendMsg(announcements)
         break;
-        case 'getGrades':
+      case 'getGrades':
         console.log('Class Grades Postback!');
-        if (!data){
+        if (!data) {
           bot.reply(message, 'Here are the grades from all your classes.');
-        }
-        else {
-          bot.reply(message, 'Here are the grades from the class with ID = ' + data);
+        } else {
+          bot.reply(message, `Here are the grades from the class with ID = ${data}`);
         }
         // retrieveGrades
         // sendMsg(grades)
         break;
-        case 'help':
+      case 'help':
         console.log('Help Postback!');
         bot.reply(message, 'Here are some of the things you can use me for.');
         // sendMsg(help)
         break;
-        default:
-      }
-    });
+      default:
+    }
+  });
 
-    return controller;
-  };
+  return controller;
+};
+
+exports.alterUserCourseSubscriptions = alterUserCourseSubscriptions;

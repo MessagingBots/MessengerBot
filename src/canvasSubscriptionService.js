@@ -1,7 +1,34 @@
+import axios from 'axios';
 import request from 'request';
 import config from 'config-heroku';
 
 const FB_ACCESS_TOKEN = config.fb.pageAccessToken;
+const CANVAS_API = config.CANVAS_API;
+
+function getStudentUpcomingCanvasEvents(userCanvasToken) {
+  return new Promise((resolve, reject) => {
+    const axiosOptions = {
+      url: `${CANVAS_API}users/self/upcoming_events`,
+      headers: {
+        Authorization: `Bearer ${userCanvasToken}`,
+      },
+      params: {
+        enrollment_state: 'active',
+      },
+    };
+
+    axios.request(axiosOptions)
+      .then((res) => {
+        const courses = res.data;
+        resolve(courses);
+      })
+      .catch((err) => {
+        console.log('Error retrieving courses');
+        console.log(err);
+        reject(err);
+      });
+  });
+}
 
 function sendFBTextMessage(sender, text) {
   const messageData = { text };
@@ -39,6 +66,35 @@ module.exports = (storage) => {
 
           if (student.canvas && student.canvas.subscribedCourses &&
               student.canvas.subscribedCourses.length > 0) {
+
+            const subscribedCourses = student.canvas.subscribedCourses;
+            let messagePayload = {
+              events: [],
+            };
+
+            getStudentUpcomingCanvasEvents(student.canvas.token)
+              .then((canvasEvents) => {
+                canvasEvents.forEach((event) => {
+                  const eventCourseCode = event.context_code.split('_')[1];
+                  if (subscribedCourses.indexOf(eventCourseCode) > -1) {
+                    const trimmedEvent = {
+                      title: event.title,
+
+                    }
+                    messagePayload.events.push()
+                  }
+                })
+              })
+              .catch((canvasEventsError) => {
+                console.log('Error retreiving user upcoming events');
+                console.log(canvasEventsError);
+              })
+
+
+            subscribedCourses.forEach((course) => {
+
+            });
+
             console.log('Student\'s subscribed courses are:');
             console.log(student.canvas.subscribedCourses);
           }

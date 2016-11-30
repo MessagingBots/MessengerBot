@@ -79,37 +79,37 @@ module.exports = (controller) => {
               const courseImage = `${SERVER_URL}assets/` + course_colors[index];
 
               newCourseElement = {
-               title: course.name,
-               subtitle : 'Time: ......., Location: ..........',
-               image_url: courseImage,
-               item_url: courseURL,
-               buttons: [
-                 {
+                title: course.name,
+                subtitle : 'Time: ......., Location: ..........',
+                image_url: courseImage,
+                item_url: courseURL,
+                buttons: [
+                  {
                    type: 'postback',
                    title: 'Announcements',
                    payload: JSON.stringify({
                      action: 'getAnnouncements',
                      data: course.id,
                    }),
-                 },
-                 {
+                  },
+                  {
                    type: 'postback',
                    title: 'Upcomming HW',
                    payload: JSON.stringify({
                      action: 'getUpcomingHw',
                      data: course.id,
                    }),
-                 },
-                 {
+                  },
+                  {
                    type: 'postback',
                    title: 'Grades',
                    payload: JSON.stringify({
                      action: 'getGrades',
                      data: course.id,
                    }),
-                 },
-               ],
-             };
+                  },
+                ],
+              };
 
              // Note: elements is limited to 10. So tere can only a max of 10 courses.
              attachment.payload.elements.push(newCourseElement);
@@ -158,44 +158,52 @@ module.exports = (controller) => {
           .then((courses) => {
             // Will store the element we are adding to the message attachment payload
             let newCourseElement = {};
-            courses.forEach((course) => {
-              if (user.canvas.subscribedCourses &&
-                user.canvas.subscribedCourses.includes(course.id)) {
-                if (!course.name) {
-                  course.name = 'No name for course';
-                }
-                const courseURL = `${CANVAS_URL}courses/${course.id}`;
-                newCourseElement = {
-                  title: course.name,
-                  image_url: `${SERVER_URL}assets/thumbsup.png`,
-                  buttons: [
-                    {
-                      title: 'Open Course',
-                      type: 'web_url',
-                      url: courseURL,
-                    },
-                    {
-                      title: 'Remove Course',
-                      type: 'postback',
-                      payload: JSON.stringify({
-                        action: 'removeCourse',
-                        data: {
-                          course: course.id,
-                        },
-                      }),
-                    },
-                  ],
-                };
 
-                attachment.payload.elements.push(newCourseElement);
-              }
+            courses.forEach((course) => {
+              // Check if the user has subscribed courses, and if this course matches
+              if (user.canvas.subscribedCourses) {
+                const subscribedCourses = user.canvas.subscribedCourses;
+                const indexOfCourse = subscribedCourses.map(subscribedCourse =>
+                  subscribedCourse.id
+                ).indexOf(course.id);
+
+                if (indexOfCourse > -1) {
+                  if (!course.name) {
+                    course.name = 'No name for course';
+                  }
+                  const courseURL = `${CANVAS_URL}courses/${course.id}`;
+                  newCourseElement = {
+                    title: course.name,
+                    image_url: `${SERVER_URL}assets/thumbsup.png`,
+                    buttons: [
+                      {
+                        title: 'Open Course',
+                        type: 'web_url',
+                        url: courseURL,
+                      },
+                      {
+                        title: 'Remove Course',
+                        type: 'postback',
+                        payload: JSON.stringify({
+                          action: 'removeCourse',
+                          data: {
+                            course: subscribedCourses[indexOfCourse],
+                          },
+                        }),
+                      },
+                    ],
+                  };
+
+                  attachment.payload.elements.push(newCourseElement);
+                }
+              } // End of if (user.canvas.subscribedCourses) {...}
             }); // End of courses.forEach(...)
 
             // Send courses to user
             if (attachment.payload.elements.length <= 0) {
               bot.reply(message, 'You haven\'t subscribed to any courses ');
             } else {
-              bot.reply(message, 'You\'re subscribed courses are: ');
+              bot.reply(message, 'Your subscribed courses are: ');
               bot.reply(message, { attachment }, (botErr) => {
                 if (botErr) {
                   console.log('ERROR');
@@ -257,7 +265,10 @@ module.exports = (controller) => {
                     payload: JSON.stringify({
                       action: 'watchCourse',
                       data: {
-                        course: course.id,
+                        course: {
+                          id: course.id,
+                          title: course.name,
+                        },
                       },
                     }),
                   },
