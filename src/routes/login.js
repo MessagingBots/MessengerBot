@@ -3,9 +3,11 @@ exports.get = (req, res) => {
 };
 
 exports.login = passport =>
-  (req, res, next) =>
-    passport.authenticate('local-login', {
+  (req, res, next) => {
+    console.log('loggig in!');
+    return passport.authenticate('local-login', {
       successRedirect: '/profile',
       failureRedirect: '/login',
       failureFlash: true,
     })(req, res, next);
+  };

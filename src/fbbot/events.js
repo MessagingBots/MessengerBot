@@ -137,10 +137,7 @@ function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
         }
         subscribedCourses.push(course);
       } else {
-        const indexOfCourse = subscribedCourses.map(subscribedCourse =>
-          subscribedCourse.id
-        ).indexOf(course.id);
-        // const indexOfCourse = subscribedCourses.indexOf(course);
+        const indexOfCourse = sendUtils.arrayObjectIndexOf(subscribedCourses, course.id, 'id');
         if (indexOfCourse > -1) {
           subscribedCourses.splice(indexOfCourse, 1);
         }

@@ -9,7 +9,11 @@ const CANVAS_API = config.CANVAS_API;
 const SERVER_URL = config.SERVER_URL;
 const fbConfig = config.fb;
 
-module.exports.getUserCanvasCourses = function (userCanvasToken) {
+exports.arrayObjectIndexOf = function (array, searchTerm, prop) {
+  return array.map(item => item[prop]).indexOf(searchTerm);
+};
+
+exports.getUserCanvasCourses = function (userCanvasToken) {
   return new Promise((resolve, reject) => {
     const axiosOptions = {
       url: `${CANVAS_API}courses?include=sections`,

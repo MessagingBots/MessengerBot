@@ -12,6 +12,11 @@ function getStorage(db, zone) {
     get: (id, cb) => {
       table.findOne({ id }, cb);
     },
+    findBy: (property, value, cb) => {
+      const queryObj = {};
+      queryObj[property] = value;
+      table.findOne(queryObj, cb);
+    },
     getByFBSenderID: (fbSenderID, cb) => {
       table.findOne({ 'fb.senderID': fbSenderID }, cb);
     },

@@ -2,8 +2,11 @@ import axios from 'axios';
 import request from 'request';
 import config from 'config-heroku';
 
+import sendUtils from './fbbot/sendUtils';
+
 const FB_ACCESS_TOKEN = config.fb.pageAccessToken;
 const CANVAS_API = config.CANVAS_API;
+const SERVER_URL = config.SERVER_URL;
 
 function getStudentUpcomingCanvasEvents(userCanvasToken) {
   return new Promise((resolve, reject) => {
@@ -30,16 +33,12 @@ function getStudentUpcomingCanvasEvents(userCanvasToken) {
   });
 }
 
-function sendFBTextMessage(sender, text) {
-  const messageData = { text };
+function callSendAPI(messageData) {
   request({
     url: 'https://graph.facebook.com/v2.6/me/messages',
     qs: { access_token: FB_ACCESS_TOKEN },
     method: 'POST',
-    json: {
-      recipient: { id: sender },
-      message: messageData,
-    },
+    json: messageData,
   }, (error, response, body) => {
     if (error) {
       console.log('Error sending messages: ', error);
@@ -47,6 +46,34 @@ function sendFBTextMessage(sender, text) {
       console.log('Error: ', response.body.error);
     }
   });
+}
+
+function sendTemplatedMessage(id, elements) {
+  const messageData = {
+    recipient: { id },
+    message: {
+      attachment: {
+        type: 'template',
+        payload: {
+          template_type: 'generic',
+          elements,
+        },
+      },
+    },
+  };
+
+  callSendAPI(messageData);
+}
+
+function sendFBTextMessage(id, text) {
+  const messageData = {
+    recipient: { id },
+    message: {
+      text,
+    },
+  };
+
+  callSendAPI(messageData);
 }
 
 module.exports = (storage) => {
@@ -64,26 +91,44 @@ module.exports = (storage) => {
         students.forEach((student) => {
           console.log(student);
 
+          console.log('student canvas?');
+          console.log(student.canvas);
           if (student.canvas && student.canvas.subscribedCourses &&
               student.canvas.subscribedCourses.length > 0) {
 
             const subscribedCourses = student.canvas.subscribedCourses;
-            let messagePayload = {
-              events: [],
-            };
+            let messagePayload = []
 
             getStudentUpcomingCanvasEvents(student.canvas.token)
               .then((canvasEvents) => {
                 canvasEvents.forEach((event) => {
                   const eventCourseCode = event.context_code.split('_')[1];
-                  if (subscribedCourses.indexOf(eventCourseCode) > -1) {
+                  console.log('searching for ');
+                  console.log(eventCourseCode);
+                  const indexOfCourse = sendUtils.arrayObjectIndexOf(subscribedCourses, eventCourseCode, 'id');
+
+                  console.log('INDEX OF COURSE?!!');
+                  console.log(indexOfCourse);
+                  if (indexOfCourse > -1) {
                     const trimmedEvent = {
                       title: event.title,
+                      image_url: `${SERVER_URL}assets/thumbsup.png`,
+                      buttons: [
+                        {
+                          title: 'View Event',
+                          type: 'web_url',
+                          url: event.url,
+                        },
+                      ],
+                    };
 
-                    }
-                    messagePayload.events.push()
+                    messagePayload.events.push(trimmedEvent);
                   }
-                })
+                });
+
+                console.log('~~~~~~~~~~~~~~~~~~~');
+                console.log('sending!!');
+                // sendTemplatedMessage(messagePayload);
               })
               .catch((canvasEventsError) => {
                 console.log('Error retreiving user upcoming events');
@@ -91,9 +136,9 @@ module.exports = (storage) => {
               })
 
 
-            subscribedCourses.forEach((course) => {
-
-            });
+            // subscribedCourses.forEach((course) => {
+            //
+            // });
 
             console.log('Student\'s subscribed courses are:');
             console.log(student.canvas.subscribedCourses);
