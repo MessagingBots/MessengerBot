@@ -9,6 +9,71 @@ const CANVAS_URL = config.CANVAS_URL;
 
 const moment = require('moment');
 
+// Get an array of all the grades given a courseID.
+// Return that array of grades, Where each grade is simplified with lesss fields.
+function getCourseGrades(userId, controller, courseID) {
+  return new Promise((resolve, reject) => {
+    controller.storage.students.getByFBSenderID(userId, (err, user) => {
+      if (err) {
+        console.log('Error finding user');
+        console.log(err);
+        reject('I\'m sorry there was an error.');
+      } else if (!user) {
+        console.log('We couldn\'t find a user for this account, please link your account');
+        reject('We couldn\'t find a user for this account, please link your account');
+      } else if (user.canvas.token) {
+        // Get the user's grade  for this course on Canvas
+        sendUtils.getCourseGrades(user.canvas.token, courseID)
+        .then((grades) => {
+          const simplifiedGrades = [];
+          grades[0].submissions.forEach((submission) => {
+            // Only if there is a grade score.
+            if (submission.score) {
+              const simplifiedGrade = {
+                id: submission.id,
+                score: submission.score,
+                graded_at: submission.graded_at,
+                assignment_id: submission.assignment.id,
+                assignment_name: submission.assignment.name,
+                assignment_created_at: submission.assignment.created_at,
+                assignment_due_at: submission.assignment.due_at,
+                assignment_points_possible: submission.assignment.points_possible,
+                assignment_html_url: submission.assignment.html_url,
+              };
+              simplifiedGrades.push(simplifiedGrade);
+            }
+            // console.log(simplifiedGrade);
+          });
+
+          // Sort them by the graded date.
+          simplifiedGrades.sort(function (a, b) {
+            return a.graded_at < b.graded_at;
+          });
+          // console.log(simplifiedGrades);
+
+          // Send it all back. All the grades with minimalistic fields.
+          const courseGrade = {
+            user_id: grades[0].user_id,
+            section_id: grades[0].section_id,
+            computed_final_score: grades[0].computed_final_score,
+            computed_current_score: grades[0].computed_current_score,
+            grades: simplifiedGrades,
+          };
+          resolve(courseGrade);
+        })
+        .catch((error) => {
+          console.log('Error getting grades');
+          console.log(error);
+          reject(error);
+        });
+      } else {
+        console.log('We couldn\'t find a token for this account, please link your account');
+        reject('We couldn\'t find a token for this account, please link your account');
+      }
+    });
+  });
+}
+
 // Get an array of all the assignments given a courseID.
 // Return that array of assigments, Where each assigment is simplified with lesss fields.
 function getCourseAssignments(userId, controller, courseID) {
@@ -104,7 +169,7 @@ function getCourseAnnouncements(userId, controller, courseID) {
           resolve(simplifiedAnnouncments);
         })
         .catch((error) => {
-          console.log('Error getting assignments');
+          console.log('Error getting announcments');
           console.log(error);
           reject(error);
         });
@@ -327,35 +392,39 @@ module.exports = (controller) => {
 
           getCourseAssignments(message.user, controller, data.course_id, bot, message)
           .then((assignmentsMsg) => {
-            assignmentsMsg.forEach((tempAssigmentMsg) => {
-               console.log("*************************");
-               console.log(tempAssigmentMsg.name);
+            if (assignmentsMsg.length > 0){
+              assignmentsMsg.forEach((tempAssigmentMsg) => {
+                //  console.log("*************************");
+                //  console.log(tempAssigmentMsg.name);
 
-              const dueDateFormatted = moment(tempAssigmentMsg.due_at);
-              const dateNow = moment();
+                const dueDateFormatted = moment(tempAssigmentMsg.due_at);
+                const dateNow = moment();
 
-              if (dueDateFormatted.isAfter(dateNow)) {
-                const attachment = {
-                  type: 'template',
-                  payload: {
-                    template_type: 'generic',
-                    elements: [
-                      {
-                        title: tempAssigmentMsg.name,
-                        subtitle: 'Due Date: ' + dueDateFormatted.format('MMMM Do YYYY, h:mm:ss a') + ', Points: ' + tempAssigmentMsg.points_possible,
-                        // item_url: tempAssigmentMsg.html_url,
-                        default_action: {
-                          type: 'web_url',
-                          url: tempAssigmentMsg.html_url,
+                if (dueDateFormatted.isAfter(dateNow)) {
+                  const attachment = {
+                    type: 'template',
+                    payload: {
+                      template_type: 'generic',
+                      elements: [
+                        {
+                          title: tempAssigmentMsg.name,
+                          subtitle: 'Due Date: ' + dueDateFormatted.format('MMMM Do YYYY, h:mm:ss a') + ', Points: ' + tempAssigmentMsg.points_possible,
+                          // item_url: tempAssigmentMsg.html_url,
+                          default_action: {
+                            type: 'web_url',
+                            url: tempAssigmentMsg.html_url,
+                          },
+                          //image_url: `${SERVER_URL}assets/upcomming_hm.png`,
                         },
-                        //image_url: `${SERVER_URL}assets/upcomming_hm.png`,
-                      },
-                    ],
-                  },
-                };
-                bot.reply(message, { attachment });
-              }
-            });
+                      ],
+                    },
+                  };
+                  bot.reply(message, { attachment });
+                }
+              });
+            } else {
+              bot.reply(message, 'There are no assignments posted at this time. Check back later.');
+            }
           })
           .catch((e) => {
             console.log('Error');
@@ -428,15 +497,43 @@ module.exports = (controller) => {
         } else {
           bot.reply(message, 'Here are the grades from ' + data.course_name);
 
-          // getCourseAssignments(message.user, controller, data.course_id, bot, message)
-          // .then((gradesMsg) => {
-          //   bot.reply(message, gradesMsg);
-          // })
-          // .catch((e) => {
-          //   console.log('Error');
-          //   console.log(e);
-          //   bot.reply(message, e);
-          // });
+          getCourseGrades(message.user, controller, data.course_id, bot, message)
+          .then((gradesMsg) => {
+            if(gradesMsg.grades.length > 0){
+              gradesMsg.grades.forEach((gradeMsg) => {
+                // console.log("*************************");
+                // console.log(gradeMsg);
+                const gradedDate = moment(gradeMsg.graded_at);
+                const attachment = {
+                  type: 'template',
+                  payload: {
+                    template_type: 'generic',
+                    elements: [
+                      {
+                        title: gradeMsg.assignment_name,
+                        subtitle: 'Graded at: ' + gradedDate.format('MMMM Do YYYY, h:mm:ss a') + ', Score: ' + gradeMsg.score + '/' + gradeMsg.assignment_points_possible,
+                        // item_url: gradeMsg.html_url,
+                        default_action: {
+                          type: 'web_url',
+                          url: gradeMsg.assignment_html_url,
+                        },
+                      },
+                    ],
+                  },
+                };
+                bot.reply(message, { attachment });
+              });
+              // Total grade as now.
+              bot.reply(message, 'Total grade: ' + gradesMsg.computed_current_score + '%');
+            } else {
+              bot.reply(message, 'There are no grades at this time. Check back later.');
+            }
+          })
+          .catch((e) => {
+            console.log('Error');
+            console.log(e);
+            bot.reply(message, e);
+          });
         }
         break;
 

@@ -14,7 +14,7 @@ const fbConfig = config.fb;
 *
 */
 exports.getCourseAssignments = function (userCanvasToken, courseID) {
-  return new Promise ((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const axiosOptions = {
       url: `${CANVAS_API}courses/${courseID}/assignments`,
       headers: {
@@ -41,7 +41,7 @@ exports.getCourseAssignments = function (userCanvasToken, courseID) {
 *
 */
 exports.getCourseAnnouncements = function (userCanvasToken, courseID) {
-  return new Promise ((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const axiosOptions = {
       url: `${CANVAS_API}announcements`,
       headers: {
@@ -60,7 +60,37 @@ exports.getCourseAnnouncements = function (userCanvasToken, courseID) {
         resolve(announcements);
       })
       .catch((err) => {
-        console.log('Error retrieving assignments for course with id = ' + courseID);
+        console.log('Error retrieving announcments for course with id = ' + courseID);
+        console.log(err);
+        reject(err);
+      });
+  });
+};
+
+/*
+* Return on the prommise for grades
+*
+*/
+exports.getCourseGrades = function (userCanvasToken, courseID) {
+  return new Promise((resolve, reject) => {
+    const axiosOptions = {
+      url: `${CANVAS_API}courses/${courseID}/students/submissions`,
+      headers: {
+        Authorization: `Bearer ${userCanvasToken}`,
+      },
+      params: {
+        include: ['assignment', 'total_scores'],
+        grouped: 'true',
+      },
+    };
+
+    axios.request(axiosOptions)
+      .then((res) => {
+        const announcements = res.data;
+        resolve(announcements);
+      })
+      .catch((err) => {
+        console.log('Error retrieving grades for course with id = ' + courseID);
         console.log(err);
         reject(err);
       });
