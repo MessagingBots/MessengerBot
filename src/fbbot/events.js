@@ -587,7 +587,7 @@ function sendHelpCommandMessage(bot, message) {
     },
     {
       name: 'Even More!',
-      value: 'You can open the persisten menu next to your typing input to ' +
+      value: 'You can open the persistent menu next to your typing input to ' +
        'do things like view your schedule, view upcoming assignments, ' +
        'announcements, and more!',
     },
