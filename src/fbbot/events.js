@@ -328,8 +328,8 @@ module.exports = (controller) => {
           getCourseAssignments(message.user, controller, data.course_id, bot, message)
           .then((assignmentsMsg) => {
             assignmentsMsg.forEach((tempAssigmentMsg) => {
-              // console.log("*************************");
-              // console.log(tempAssigmentMsg.name);
+               console.log("*************************");
+               console.log(tempAssigmentMsg.name);
 
               const dueDateFormatted = moment(tempAssigmentMsg.due_at);
               const dateNow = moment();
@@ -353,7 +353,7 @@ module.exports = (controller) => {
                     ],
                   },
                 };
-                bot.reply(message, attachment);
+                bot.reply(message, { attachment });
               }
             });
           })
