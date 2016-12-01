@@ -9,6 +9,71 @@ const CANVAS_URL = config.CANVAS_URL;
 
 const moment = require('moment');
 
+// Get an array of all the grades given a courseID.
+// Return that array of grades, Where each grade is simplified with lesss fields.
+function getCourseGrades(userId, controller, courseID) {
+  return new Promise((resolve, reject) => {
+    controller.storage.students.getByFBSenderID(userId, (err, user) => {
+      if (err) {
+        console.log('Error finding user');
+        console.log(err);
+        reject('I\'m sorry there was an error.');
+      } else if (!user) {
+        console.log('We couldn\'t find a user for this account, please link your account');
+        reject('We couldn\'t find a user for this account, please link your account');
+      } else if (user.canvas.token) {
+        // Get the user's grade  for this course on Canvas
+        sendUtils.getCourseGrades(user.canvas.token, courseID)
+        .then((grades) => {
+          const simplifiedGrades = [];
+          grades[0].submissions.forEach((submission) => {
+            // Only if there is a grade score.
+            if (submission.score) {
+              const simplifiedGrade = {
+                id: submission.id,
+                score: submission.score,
+                graded_at: submission.graded_at,
+                assignment_id: submission.assignment.id,
+                assignment_name: submission.assignment.name,
+                assignment_created_at: submission.assignment.created_at,
+                assignment_due_at: submission.assignment.due_at,
+                assignment_points_possible: submission.assignment.points_possible,
+                assignment_html_url: submission.assignment.html_url,
+              };
+              simplifiedGrades.push(simplifiedGrade);
+            }
+            // console.log(simplifiedGrade);
+          });
+
+          // Sort them by the graded date.
+          simplifiedGrades.sort(function (a, b) {
+            return a.graded_at < b.graded_at;
+          });
+          // console.log(simplifiedGrades);
+
+          // Send it all back. All the grades with minimalistic fields.
+          const courseGrade = {
+            user_id: grades[0].user_id,
+            section_id: grades[0].section_id,
+            computed_final_score: grades[0].computed_final_score,
+            computed_current_score: grades[0].computed_current_score,
+            grades: simplifiedGrades,
+          };
+          resolve(courseGrade);
+        })
+        .catch((error) => {
+          console.log('Error getting grades');
+          console.log(error);
+          reject(error);
+        });
+      } else {
+        console.log('We couldn\'t find a token for this account, please link your account');
+        reject('We couldn\'t find a token for this account, please link your account');
+      }
+    });
+  });
+}
+
 // Get an array of all the assignments given a courseID.
 // Return that array of assigments, Where each assigment is simplified with lesss fields.
 function getCourseAssignments(userId, controller, courseID) {
@@ -41,7 +106,7 @@ function getCourseAssignments(userId, controller, courseID) {
           });
 
           // Sort them by the due date.
-          simplifiedAssigments.sort( function (a, b) {
+          simplifiedAssigments.sort(function (a, b) {
             return a.due_at < b.due_at;
           });
           // console.log(simplifiedAssigments);
@@ -104,7 +169,50 @@ function getCourseAnnouncements(userId, controller, courseID) {
           resolve(simplifiedAnnouncments);
         })
         .catch((error) => {
-          console.log('Error getting assignments');
+          console.log('Error getting announcments');
+          console.log(error);
+          reject(error);
+        });
+      } else {
+        console.log('We couldn\'t find a token for this account, please link your account');
+        reject('We couldn\'t find a token for this account, please link your account');
+      }
+    });
+  });
+}
+
+// Get an array of all the courses currently enrolled
+// Return the array of courses enroled, where each course is simplified.
+function getCoursesEnrolled(userId, controller) {
+  return new Promise((resolve, reject) => {
+    controller.storage.students.getByFBSenderID(userId, (err, user) => {
+      if (err) {
+        console.log('Error finding user');
+        console.log(err);
+        reject('I\'m sorry there was an error.');
+      } else if (!user) {
+        console.log('We couldn\'t find a user for this account, please link your account');
+        reject('We couldn\'t find a user for this account, please link your account');
+      } else if (user.canvas.token) {
+        // Get the user's currently enrolled courses on Canvas
+        sendUtils.getUserCanvasCourses(user.canvas.token)
+        .then((courses) => {
+          const simplifiedCourses = [];
+          courses.forEach((tempCourse) => {
+            const simplifiedCourse = {
+              course_id: tempCourse.id,
+              course_name: tempCourse.name,
+              course_code: tempCourse.course_code,
+            };
+            simplifiedCourses.push(simplifiedCourse);
+            // console.log(simplifiedCourse);
+          });
+
+          // Send it all back. All the grades with minimalistic fields.
+          resolve(simplifiedCourses);
+        })
+        .catch((error) => {
+          console.log('Error getting courses');
           console.log(error);
           reject(error);
         });
@@ -218,8 +326,7 @@ function getSchedule(userId, controller) {
           console.log(error);
           reject(error);
         });
-      } // else if (user.canvas.token)...
-      else {
+      } else {
         console.log('We couldn\'t find a token for this account, please link your account');
         reject('We couldn\'t find a token for this account, please link your account');
       }
@@ -268,6 +375,191 @@ function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
           }
         });
     }
+  });
+}
+
+/*
+* Display all the grades given a course ID.
+* First query the grades and then display as a list of generics
+*/
+function displayCourseGrades(bot, message, controller, data) {
+  bot.reply(message, 'Here are the grades from ' + data.course_name);
+
+  getCourseGrades(message.user, controller, data.course_id, bot, message)
+  .then((gradesMsg) => {
+    if (gradesMsg.grades.length > 0) {
+      gradesMsg.grades.forEach((gradeMsg) => {
+        // console.log("*************************");
+        // console.log(gradeMsg);
+        const gradedDate = moment(gradeMsg.graded_at);
+        const attachment = {
+          type: 'template',
+          payload: {
+            template_type: 'generic',
+            elements: [
+              {
+                title: gradeMsg.assignment_name,
+                subtitle: 'Graded at: ' + gradedDate.format('MMMM Do YYYY, h:mm:ss a') + ', Score: ' + gradeMsg.score + '/' + gradeMsg.assignment_points_possible,
+                // item_url: gradeMsg.html_url,
+                default_action: {
+                  type: 'web_url',
+                  url: gradeMsg.assignment_html_url,
+                },
+              },
+            ],
+          },
+        };
+        bot.reply(message, { attachment });
+      });
+      // Total grade as now.
+      bot.reply(message, 'Total grade: ' + gradesMsg.computed_current_score + '%');
+    } else {
+      bot.reply(message, 'There are no grades at this time. Check back later.');
+    }
+  })
+  .catch((e) => {
+    console.log('Error');
+    console.log(e);
+    bot.reply(message, e);
+  });
+}
+
+/*
+* Display all the upcoming assignments given a course ID.
+* First query the upcoming assignments and then display as a list of generics
+*/
+function displayCourseUpcomingHw(bot, message, controller, data) {
+  getCourseAssignments(message.user, controller, data.course_id, bot, message)
+  .then((assignmentsMsg) => {
+    if (assignmentsMsg.length > 0) {
+      bot.reply(message, 'Here are your upcoming assignments from ' + data.course_name);
+
+      assignmentsMsg.forEach((tempAssigmentMsg) => {
+        //  console.log(tempAssigmentMsg.name);
+
+        const dueDateFormatted = moment(tempAssigmentMsg.due_at);
+        const dateNow = moment();
+
+        if (dueDateFormatted.isAfter(dateNow)) {
+          const attachment = {
+            type: 'template',
+            payload: {
+              template_type: 'generic',
+              elements: [
+                {
+                  title: tempAssigmentMsg.name,
+                  subtitle: 'Due Date: ' + dueDateFormatted.format('MMMM Do YYYY, h:mm:ss a') + ', Points: ' + tempAssigmentMsg.points_possible,
+                  // item_url: tempAssigmentMsg.html_url,
+                  default_action: {
+                    type: 'web_url',
+                    url: tempAssigmentMsg.html_url,
+                  },
+                  //image_url: `${SERVER_URL}assets/upcoming_hm.png`,
+                },
+              ],
+            },
+          };
+          bot.reply(message, { attachment });
+        }
+      });
+    } else {
+      bot.reply(message, 'There are no assignments posted at this time. Check back later.');
+    }
+  })
+  .catch((e) => {
+    console.log('Error');
+    console.log(e);
+    bot.reply(message, e);
+  });
+}
+
+/*
+* Display all the announcments given a course ID.
+* First query the announcments and then display as a list of generics
+*/
+function displayCourseAnnouncements(bot, message, controller, data) {
+  getCourseAnnouncements(message.user, controller, data.course_id, bot, message)
+  .then((announcementsMsg) => {
+    if (announcementsMsg.length > 0) {
+      bot.reply(message, 'Here are the announcements from ' + data.course_name);
+
+      // Facebook allows to send 2 to 4 items in a vertical list. So if ther is
+      // only one announcement we have to send it other way, using a generic template.
+      if (announcementsMsg.length < 2) {
+        const postedDate = moment(announcementsMsg[0].posted_at).format('MMMM Do YYYY, h:mm:ss a');
+        const attachment = {
+          type: 'template',
+          payload: {
+            template_type: 'generic',
+            elements: [
+              {
+                title: announcementsMsg[0].title,
+                subtitle: 'Posted at: ' + postedDate,
+                default_action: {
+                  type: 'web_url',
+                  url: announcementsMsg[0].html_url,
+                },
+                buttons: [
+                  {
+                    title: 'Read More',
+                    type: 'web_url',
+                    url: announcementsMsg[0].html_url,
+                  },
+                ],
+              },
+            ],
+          },
+        };
+        bot.reply(message, { attachment });
+      } else {
+        // If more than two announcements, send them as list.
+        const attachment = {
+          type: 'template',
+          payload: {
+            template_type: 'list',
+            top_element_style: 'compact',
+            elements: [
+
+            ],
+            buttons: [
+              {
+                title: 'More Announcements',
+                type: 'web_url',
+                url: CANVAS_URL + 'courses/' + data.course_id + '/announcements',
+              },
+            ],
+          },
+        };
+        for (let i = 0; i < (announcementsMsg.length && 4); i += 1) {
+          const tempAnnouncementMsg = announcementsMsg[i];
+          const postedDate = moment(tempAnnouncementMsg.posted_at).format('MMMM Do YYYY, h:mm:ss a');
+          const newAnnouncementElement = {
+            title: tempAnnouncementMsg.title,
+            subtitle: 'Posted at: ' + postedDate,
+            default_action: {
+              type: 'web_url',
+              url: tempAnnouncementMsg.html_url,
+            },
+            buttons: [
+              {
+                title: 'Read More',
+                type: 'web_url',
+                url: tempAnnouncementMsg.html_url,
+              },
+            ],
+          };
+          attachment.payload.elements.push(newAnnouncementElement);
+        }
+        bot.reply(message, { attachment });
+      }
+    } else {
+      bot.reply(message, 'There are no announcements posted at this time. Check back later.');
+    }
+  })
+  .catch((e) => {
+    console.log('Error');
+    console.log(e);
+    bot.reply(message, e);
   });
 }
 
@@ -321,47 +613,15 @@ module.exports = (controller) => {
       case 'getUpcomingHw':
         console.log('Assignments Postback!');
         if (!data) {
-          bot.reply(message, 'Here are your upcomming assignments from all your classes.');
-        } else {
-          bot.reply(message, 'Here are your upcomming assignments from ' + data.course_name);
-
-          getCourseAssignments(message.user, controller, data.course_id, bot, message)
-          .then((assignmentsMsg) => {
-            assignmentsMsg.forEach((tempAssigmentMsg) => {
-               console.log("*************************");
-               console.log(tempAssigmentMsg.name);
-
-              const dueDateFormatted = moment(tempAssigmentMsg.due_at);
-              const dateNow = moment();
-
-              if (dueDateFormatted.isAfter(dateNow)) {
-                const attachment = {
-                  type: 'template',
-                  payload: {
-                    template_type: 'generic',
-                    elements: [
-                      {
-                        title: tempAssigmentMsg.name,
-                        subtitle: 'Due Date: ' + dueDateFormatted.format('MMMM Do YYYY, h:mm:ss a') + ', Points: ' + tempAssigmentMsg.points_possible,
-                        // item_url: tempAssigmentMsg.html_url,
-                        default_action: {
-                          type: 'web_url',
-                          url: tempAssigmentMsg.html_url,
-                        },
-                        //image_url: `${SERVER_URL}assets/upcomming_hm.png`,
-                      },
-                    ],
-                  },
-                };
-                bot.reply(message, { attachment });
-              }
+          bot.reply(message, 'Here are your upcoming assignments from all your classes.');
+          getCoursesEnrolled(message.user, controller, bot, message)
+          .then((courses) => {
+            courses.forEach((tempCourse) => {
+              displayCourseUpcomingHw(bot, message, controller, tempCourse);
             });
-          })
-          .catch((e) => {
-            console.log('Error');
-            console.log(e);
-            bot.reply(message, e);
           });
+        } else {
+          displayCourseUpcomingHw(bot, message, controller, data);
         }
         break;
 
@@ -369,55 +629,14 @@ module.exports = (controller) => {
         console.log('Class Announcements Postback!');
         if (!data) {
           bot.reply(message, 'Here are the announcements from all your classes.');
-        } else {
-          bot.reply(message, 'Here are the announcements from ' + data.course_name);
-
-          getCourseAnnouncements(message.user, controller, data.course_id, bot, message)
-          .then((announcementsMsg) => {
-            const attachment = {
-              type: 'template',
-              payload: {
-                template_type: 'list',
-                top_element_style: 'compact',
-                elements: [
-
-                ],
-                buttons: [
-                  {
-                    title: 'More Announcements',
-                    type: 'web_url',
-                    url: CANVAS_URL + 'courses/' + data.course_id + '/announcements',
-                  },
-                ],
-              },
-            };
-            for (let i = 0; i < (announcementsMsg.length && 4); i += 1) {
-              const tempAnnouncementMsg = announcementsMsg[i];
-              const postedDate = moment(tempAnnouncementMsg.posted_at).format('MMMM Do YYYY, h:mm:ss a');
-              const newAnnouncementElement = {
-                title: tempAnnouncementMsg.title,
-                subtitle: 'Posted at: ' + postedDate,
-                default_action: {
-                  type: 'web_url',
-                  url: tempAnnouncementMsg.html_url,
-                },
-                buttons: [
-                  {
-                    title: 'Read More',
-                    type: 'web_url',
-                    url: tempAnnouncementMsg.html_url,
-                  },
-                ],
-              };
-              attachment.payload.elements.push(newAnnouncementElement);
-            }
-            bot.reply(message, { attachment });
-          })
-          .catch((e) => {
-            console.log('Error');
-            console.log(e);
-            bot.reply(message, e);
+          getCoursesEnrolled(message.user, controller, bot, message)
+          .then((courses) => {
+            courses.forEach((tempCourse) => {
+              displayCourseAnnouncements(bot, message, controller, tempCourse);
+            });
           });
+        } else {
+          displayCourseAnnouncements(bot, message, controller, data);
         }
         break;
 
@@ -425,27 +644,24 @@ module.exports = (controller) => {
         console.log('Class Grades Postback!');
         if (!data) {
           bot.reply(message, 'Here are the grades from all your classes.');
+          getCoursesEnrolled(message.user, controller, bot, message)
+          .then((courses) => {
+            courses.forEach((tempCourse) => {
+              displayCourseGrades(bot, message, controller, tempCourse);
+            });
+          });
         } else {
-          bot.reply(message, 'Here are the grades from ' + data.course_name);
-
-          // getCourseAssignments(message.user, controller, data.course_id, bot, message)
-          // .then((gradesMsg) => {
-          //   bot.reply(message, gradesMsg);
-          // })
-          // .catch((e) => {
-          //   console.log('Error');
-          //   console.log(e);
-          //   bot.reply(message, e);
-          // });
+          displayCourseGrades(bot, message, controller, data);
         }
         break;
 
       case 'help':
         console.log('Help Postback!');
         bot.reply(message, 'Here are some of the things you can use me for.');
-        // sendMsg(help)
         break;
+
       default:
+        break;
     }
   });
 

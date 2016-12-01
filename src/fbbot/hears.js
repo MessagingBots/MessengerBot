@@ -97,7 +97,7 @@ module.exports = (controller) => {
                 },
                 {
                   type: 'postback',
-                  title: 'Upcomming HW',
+                  title: 'Upcoming HW',
                   payload: JSON.stringify({
                     action: 'getUpcomingHw',
                     data: {
