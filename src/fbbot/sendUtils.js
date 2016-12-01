@@ -33,6 +33,34 @@ module.exports.getCourseAssignments = function (userCanvasToken, courseID){
   });
 };
 
+// Return on the prommise for announcments
+module.exports.getCourseAnnouncements = function (userCanvasToken, courseID){
+  return new Promise ((resolve, reject) => {
+    const axiosOptions = {
+      url: `${CANVAS_API}announcements`,
+      headers: {
+        Authorization: `Bearer ${userCanvasToken}`,
+      },
+      params: {
+        context_codes: 'course_' + courseID,
+        start_date: '2015-11-30',
+        end_date: '2016-11-30',
+      },
+    };
+
+    axios.request(axiosOptions)
+      .then((res) => {
+        const announcements = res.data;
+        resolve(announcements);
+      })
+      .catch((err) => {
+        console.log('Error retrieving assignments for course with id = ' + courseID);
+        console.log(err);
+        reject(err);
+      });
+  });
+};
+
 module.exports.getUserCanvasCourses = function (userCanvasToken) {
   return new Promise((resolve, reject) => {
     const axiosOptions = {

@@ -5,6 +5,8 @@ import sendUtils from './sendUtils';
 
 const ONE_COURSE_API = config.ONE_COURSE_API;
 const SERVER_URL = config.SERVER_URL;
+const CANVAS_URL = config.CANVAS_URL;
+
 
 var moment = require('moment');
 
@@ -55,6 +57,63 @@ function getCourseAssignments (userId, controller, courseID){
           reject(error);
         });
       } // else if (user.canvas.token)...
+      else {
+        console.log('We couldn\'t find a token for this account, please link your account');
+        reject('We couldn\'t find a token for this account, please link your account');
+      }
+    });
+  });
+}
+
+// Get an array of all the announcements given a courseID
+// REturn the array of the announcements where each announcment now has simplified fileds.
+function getCourseAnnouncements(userId, controller, courseID){
+  return new Promise((resolve, reject) => {
+    controller.storage.students.getByFBSenderID(userId, (err, user) => {
+      if (err) {
+        console.log('Error finding user');
+        console.log(err);
+        reject('I\'m sorry there was an error.');
+      } else if (!user) {
+        console.log('We couldn\'t find a user for this account, please link your account');
+        reject('We couldn\'t find a user for this account, please link your account');
+      } else if (user.canvas.token) {
+
+        // Get the user's announcments  for this course on Canvas
+        sendUtils.getCourseAnnouncements(user.canvas.token, courseID)
+        .then((announcments) => {
+
+          //console.log(announcments);
+          let simplifiedAnnouncments = [];
+
+          announcments.forEach((announcment) => {
+            let simplifiedAnnouncment = {
+              id: announcment.id,
+              title: announcment.title,
+              posted_at: announcment.posted_at,
+              context_code: announcment.context_code,
+              html_url: announcment.html_url,
+              message: announcment.message
+            };
+            simplifiedAnnouncments.push(simplifiedAnnouncment);
+            //console.log(simplifiedAnnouncment);
+          });
+
+          // Sort them by the posted date.
+          simplifiedAnnouncments.sort(function (a,b){
+            return a.posted_at < b.posted_at;
+          });
+          console.log(simplifiedAnnouncments);
+
+          // Send it all back. All the assiments with minimalistic fields.
+          resolve(simplifiedAnnouncments);
+        })
+        .catch((error) => {
+          console.log('Error getting assignments');
+          console.log(error);
+          reject(error);
+        });
+      }
       else {
         console.log('We couldn\'t find a token for this account, please link your account');
         reject('We couldn\'t find a token for this account, please link your account');
@@ -278,8 +337,8 @@ module.exports = (controller) => {
           getCourseAssignments(message.user, controller, data.course_id, bot, message)
           .then((assignmentsMsg) => {
             assignmentsMsg.forEach((tempAssigmentMsg) => {
-              console.log("*************************");
-              console.log(tempAssigmentMsg.name);
+              //console.log("*************************");
+              //console.log(tempAssigmentMsg.name);
 
               var dueDateFormatted = moment(tempAssigmentMsg.due_at);
               var dateNow = moment();
@@ -317,42 +376,91 @@ module.exports = (controller) => {
         break;
 
       case 'getAnnouncements':
-      console.log('Class Announcements Postback!');
-      if (!data){
-        bot.reply(message, 'Here are the announcements from all your classes.');
-      }
-      else {
-        bot.reply(message, 'Here are the announcements from ' + data.course_name);
-      }
-      // retrieveAnnouncemnets
-      // sendMsg(announcements)
-      break;
-      case 'getGrades':
-      console.log('Class Grades Postback!');
-      if (!data){
-        bot.reply(message, 'Here are the grades from all your classes.');
-      }
-      else {
-        bot.reply(message, 'Here are the grades from ' + data.course_name);
+        console.log('Class Announcements Postback!');
+        if (!data){
+          bot.reply(message, 'Here are the announcements from all your classes.');
+        }
+        else {
+          bot.reply(message, 'Here are the announcements from ' + data.course_name);
 
-        getCourseAssignments(message.user, controller, data.course_id, bot, message)
-        .then((gradesMsg) => {
-          bot.reply(message, gradesMsg);
-        })
-        .catch((e) => {
-          console.log('Error');
-          console.log(e);
-          bot.reply(message, e);
-        });
-      }
-      // retrieveGrades
-      // sendMsg(grades)
-      break;
+          getCourseAnnouncements(message.user, controller, data.course_id, bot, message)
+          .then((announcementsMsg) =>{
+
+            const attachment = {
+              type: 'template',
+              payload: {
+                template_type: 'list',
+                top_element_style: 'compact',
+                elements: [
+
+                ],
+                buttons: [
+                  {
+                    title: 'More Announcements',
+                    type: 'web_url',
+                    url: CANVAS_URL + 'courses/' + data.course_id + '/announcements',
+                  }
+                ],
+              }
+            };
+
+            for (var i = 0; i < (announcementsMsg.length && 4); i++){
+              var tempAnnouncementMsg = announcementsMsg[i];
+              var postedDate = moment(tempAnnouncementMsg.posted_at).format('MMMM Do YYYY, h:mm:ss a');
+              var newAnnouncementElement = {
+                  title: tempAnnouncementMsg.title,
+                  subtitle: 'Posted at: ' + postedDate,
+                  default_action: {
+                    type: 'web_url',
+                    url: tempAnnouncementMsg.html_url,
+                  },
+                  buttons: [
+                    {
+                      title: 'Read More',
+                      type: 'web_url',
+                      url: tempAnnouncementMsg.html_url,
+                    }
+                  ]
+              };
+              attachment.payload.elements.push(newAnnouncementElement);
+            }
+            bot.reply(message, {attachment});
+          })
+          .catch((e) => {
+            console.log('Error');
+            console.log(e);
+            bot.reply(message, e);
+          });
+        }
+        break;
+
+      case 'getGrades':
+        console.log('Class Grades Postback!');
+        if (!data){
+          bot.reply(message, 'Here are the grades from all your classes.');
+        }
+        else {
+          bot.reply(message, 'Here are the grades from ' + data.course_name);
+
+          getCourseAssignments(message.user, controller, data.course_id, bot, message)
+          .then((gradesMsg) => {
+            bot.reply(message, gradesMsg);
+          })
+          .catch((e) => {
+            console.log('Error');
+            console.log(e);
+            bot.reply(message, e);
+          });
+        }
+        // retrieveGrades
+        // sendMsg(grades)
+        break;
+
       case 'help':
-      console.log('Help Postback!');
-      bot.reply(message, 'Here are some of the things you can use me for.');
-      // sendMsg(help)
-      break;
+        console.log('Help Postback!');
+        bot.reply(message, 'Here are some of the things you can use me for.');
+        // sendMsg(help)
+        break;
       default:
     }
   });
