@@ -10,7 +10,9 @@ const SERVER_URL = config.SERVER_URL;
 const fbConfig = config.fb;
 
 exports.arrayObjectIndexOf = function (array, searchTerm, prop) {
-  return array.map(item => item[prop]).indexOf(searchTerm);
+  return array.map(element =>
+    element[prop]
+  ).indexOf(searchTerm);
 };
 
 exports.getUserCanvasCourses = function (userCanvasToken) {

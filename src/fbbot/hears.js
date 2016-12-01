@@ -163,7 +163,7 @@ module.exports = (controller) => {
               // Check if the user has subscribed courses, and if this course matches
               if (user.canvas.subscribedCourses) {
                 const subscribedCourses = user.canvas.subscribedCourses;
-                const indexOfCourse = sendUtils.arrayObjectIndexOf(subscribedCourses, course.id, 'id');
+const indexOfCourse = sendUtils.arrayObjectIndexOf(subscribedCourses, course.id, 'id');
 
                 if (indexOfCourse > -1) {
                   if (!course.name) {

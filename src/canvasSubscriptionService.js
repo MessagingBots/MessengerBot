@@ -2,31 +2,52 @@ import axios from 'axios';
 import request from 'request';
 import config from 'config-heroku';
 
-import sendUtils from './fbbot/sendUtils';
-
 const FB_ACCESS_TOKEN = config.fb.pageAccessToken;
 const CANVAS_API = config.CANVAS_API;
 const SERVER_URL = config.SERVER_URL;
 
-function getStudentUpcomingCanvasEvents(userCanvasToken) {
+function getDataFromCanvas(canvasAxiosOptions) {
+  return axios.request(canvasAxiosOptions);
+}
+
+function getStudentCanvasUpcomingEvents(userCanvasToken) {
   return new Promise((resolve, reject) => {
     const axiosOptions = {
       url: `${CANVAS_API}users/self/upcoming_events`,
       headers: {
         Authorization: `Bearer ${userCanvasToken}`,
       },
-      params: {
-        enrollment_state: 'active',
+    };
+
+    getDataFromCanvas(axiosOptions)
+      .then((res) => {
+        const events = res.data;
+        resolve(events);
+      })
+      .catch((err) => {
+        console.log('Error retrieving events');
+        console.log(err);
+        reject(err);
+      });
+  });
+}
+
+function getStudentCanvasTodos(userCanvasToken) {
+  return new Promise((resolve, reject) => {
+    const axiosOptions = {
+      url: `${CANVAS_API}users/self/todo`,
+      headers: {
+        Authorization: `Bearer ${userCanvasToken}`,
       },
     };
 
-    axios.request(axiosOptions)
+    getDataFromCanvas(axiosOptions)
       .then((res) => {
-        const courses = res.data;
-        resolve(courses);
+        const data = res.data;
+        resolve(data);
       })
       .catch((err) => {
-        console.log('Error retrieving courses');
+        console.log('Error retrieving events');
         console.log(err);
         reject(err);
       });
@@ -76,83 +97,170 @@ function sendFBTextMessage(id, text) {
   callSendAPI(messageData);
 }
 
+
+/**
+ * createDueDateString - Takes a date string and returns it in the forms
+ *  'Due on Mon, 04 Dec at 7:50:00 PM'
+ *
+ * @param  {type} initialDateString description
+ * @return {type}                   description
+ */
+function createDueDateString(initialDateString) {
+  let dueDate = new Date(`${initialDateString}`);
+  const dueTime = dueDate.toLocaleTimeString();
+  dueDate = dueDate.toDateString().split(' ').slice(0, 3).join(' ');
+  return `Due on ${dueDate} at ${dueTime}`;
+}
+
+/**
+ * getAndSendTodoList - Retrieve and send a student's todolist from Canvas
+ *
+ * @param  {type} storage description
+ * @return {type}         description
+ */
+function getAndSendTodoList(storage) {
+  storage.students.all((err, students) => {
+    if (err) {
+      console.log('Error accessing students in DB');
+      console.log(err);
+    } else if (!students) {
+      console.log('No students found...');
+    } else {
+      students.forEach((student) => {
+        const messagePayload = [];
+
+        // Retrieve the student's upcoming canvas events and send it to them
+        getStudentCanvasTodos(student.canvas.token)
+          .then((canvasTodos) => {
+            canvasTodos.forEach((todo) => {
+              let subtitle = '';
+              const { assignment } = todo;
+              if (assignment && assignment.due_at) {
+                subtitle = createDueDateString(assignment.due_at);
+
+                const trimmedTodo = {
+                  title: assignment.name,
+                  subtitle,
+                  image_url: `${SERVER_URL}assets/thumbsup.png`,
+                  buttons: [
+                    {
+                      title: 'View on Canvas',
+                      type: 'web_url',
+                      url: todo.html_url,
+                    },
+                  ],
+                };
+
+                messagePayload.push(trimmedTodo);
+              }
+            });
+
+            if (student.fb) {
+              const fbData = student.fb;
+              const { senderID } = fbData;
+              sendFBTextMessage(senderID, 'You have upcoming todos!');
+              sendTemplatedMessage(senderID, messagePayload);
+            } else {
+              console.log('no fb data for student');
+            }
+          })
+          .catch((canvasEventsError) => {
+            console.log('Error retreiving user upcoming events');
+            console.log(canvasEventsError);
+          });
+      // }
+      }); // End of students.forEach(...)
+    }
+  }); // End of storage.students.all(...)
+}
+
+
+/**
+ * getAndSendUpcomingEvents - For each student, will retrieve their upcoming
+ *  events from Canvas and send them a message
+ * @param  {type} storage DB storage object
+ * @return {type}         none
+ */
+function getAndSendUpcomingEvents(storage) {
+  storage.students.all((err, students) => {
+    if (err) {
+      console.log('Error accessing students in DB');
+      console.log(err);
+    } else if (!students) {
+      console.log('No students found...');
+    } else {
+      students.forEach((student) => {
+        console.log('WOoOOOOO');
+
+        // if (student.canvas && student.canvas.subscribedCourses &&
+        //     student.canvas.subscribedCourses.length > 0) {
+
+          // const subscribedCourses = student.canvas.subscribedCourses;
+        const messagePayload = [];
+
+        // Retrieve the student's upcoming canvas events and send it to them
+        getStudentCanvasUpcomingEvents(student.canvas.token)
+          .then((canvasEvents) => {
+            canvasEvents.forEach((event) => {
+              // const eventCourseCode = parseInt(event.context_code.split('_')[1]);
+              // const indexOfCourse = sendUtils.arrayObjectIndexOf(subscribedCourses, eventCourseCode, 'id');
+              let subtitle = '';
+              if (event.assignment && event.assignment.due_at) {
+                subtitle = createDueDateString(event.assignment.due_at);
+              }
+              const trimmedEvent = {
+                title: event.title,
+                subtitle,
+                image_url: `${SERVER_URL}assets/thumbsup.png`,
+                buttons: [
+                  {
+                    title: 'View Event',
+                    type: 'web_url',
+                    url: event.url,
+                  },
+                ],
+              };
+
+              messagePayload.push(trimmedEvent);
+            });
+
+            if (student.fb) {
+              const fbData = student.fb;
+              const { senderID } = fbData;
+              sendFBTextMessage(senderID, 'You have upcoming events!');
+              sendTemplatedMessage(senderID, messagePayload);
+            } else {
+              console.log('no fb data for student');
+            }
+          })
+          .catch((canvasEventsError) => {
+            console.log('Error retreiving user upcoming events');
+            console.log(canvasEventsError);
+          });
+      // }
+      }); // End of students.forEach(...)
+    }
+  }); // End of storage.students.all(...)
+}
+
 module.exports = (storage) => {
   console.log('students');
 
+  const dayInMilliSeconds = 1000 * 60 * 60 * 24;
+  const halfDay = dayInMilliSeconds / 2;
+
+  // Call once, then set the interval
+  getAndSendUpcomingEvents(storage);
   // @TODO Uncomment setInterval when ready to test
-  // setInterval(() => {
-    storage.students.all((err, students) => {
-      if (err) {
-        console.log('Error accessing students in DB');
-        console.log(err);
-      } else if (!students) {
-        console.log('No students found...');
-      } else {
-        students.forEach((student) => {
-          console.log(student);
+  setInterval(() => {
+    getAndSendUpcomingEvents(storage);
+  }, halfDay);
 
-          console.log('student canvas?');
-          console.log(student.canvas);
-          if (student.canvas && student.canvas.subscribedCourses &&
-              student.canvas.subscribedCourses.length > 0) {
-
-            const subscribedCourses = student.canvas.subscribedCourses;
-            let messagePayload = []
-
-            getStudentUpcomingCanvasEvents(student.canvas.token)
-              .then((canvasEvents) => {
-                canvasEvents.forEach((event) => {
-                  const eventCourseCode = event.context_code.split('_')[1];
-                  console.log('searching for ');
-                  console.log(eventCourseCode);
-                  const indexOfCourse = sendUtils.arrayObjectIndexOf(subscribedCourses, eventCourseCode, 'id');
-
-                  console.log('INDEX OF COURSE?!!');
-                  console.log(indexOfCourse);
-                  if (indexOfCourse > -1) {
-                    const trimmedEvent = {
-                      title: event.title,
-                      image_url: `${SERVER_URL}assets/thumbsup.png`,
-                      buttons: [
-                        {
-                          title: 'View Event',
-                          type: 'web_url',
-                          url: event.url,
-                        },
-                      ],
-                    };
-
-                    messagePayload.events.push(trimmedEvent);
-                  }
-                });
-
-                console.log('~~~~~~~~~~~~~~~~~~~');
-                console.log('sending!!');
-                // sendTemplatedMessage(messagePayload);
-              })
-              .catch((canvasEventsError) => {
-                console.log('Error retreiving user upcoming events');
-                console.log(canvasEventsError);
-              })
-
-
-            // subscribedCourses.forEach((course) => {
-            //
-            // });
-
-            console.log('Student\'s subscribed courses are:');
-            console.log(student.canvas.subscribedCourses);
-          }
-
-          if (student.fb) {
-            const fbData = student.fb;
-            const { senderID } = fbData;
-            // sendFBTextMessage(senderID, 'Sup!');
-          } else {
-            console.log('no fb data for student');
-          }
-        });
-      }
-    });
-  // }, 5000);
+  setTimeout(() => {
+    getAndSendTodoList(storage);
+    // @TODO Uncomment setInterval when ready to test
+    setInterval(() => {
+      getAndSendTodoList(storage);
+    }, halfDay);
+  }, 5000);
 };
