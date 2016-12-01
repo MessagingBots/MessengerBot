@@ -586,8 +586,10 @@ function sendHelpCommandMessage(bot, message) {
       value: 'Link your Facebook profile to make use of the bot',
     },
     {
-      name: 'persistentMenu',
-      value: 'You can open the menu to get your schedule and view upcoming items',
+      name: 'Even More!',
+      value: 'You can open the persisten menu next to your typing input to ' +
+       'do things like view your schedule, view upcoming assignments, ' +
+       'announcements, and more!',
     },
   ];
 
