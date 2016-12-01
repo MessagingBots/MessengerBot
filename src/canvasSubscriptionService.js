@@ -127,7 +127,7 @@ function getAndSendTodoList(storage) {
       console.log('No students found...');
     } else {
       students.forEach((student) => {
-        const messagePayload = [];
+        const messages = [];
 
         // Retrieve the student's upcoming canvas events and send it to them
         getStudentCanvasTodos(student.canvas.token)
@@ -141,17 +141,10 @@ function getAndSendTodoList(storage) {
                 const trimmedTodo = {
                   title: assignment.name,
                   subtitle,
-                  image_url: `${SERVER_URL}assets/thumbsup.png`,
-                  buttons: [
-                    {
-                      title: 'View on Canvas',
-                      type: 'web_url',
-                      url: todo.html_url,
-                    },
-                  ],
+                  item_url: todo.html_url,
                 };
 
-                messagePayload.push(trimmedTodo);
+                messages.push(trimmedTodo);
               }
             });
 
@@ -159,7 +152,9 @@ function getAndSendTodoList(storage) {
               const fbData = student.fb;
               const { senderID } = fbData;
               sendFBTextMessage(senderID, 'You have upcoming todos!');
-              sendTemplatedMessage(senderID, messagePayload);
+              messages.forEach((message) => {
+                sendTemplatedMessage(senderID, [message]);
+              });
             } else {
               console.log('no fb data for student');
             }
@@ -190,13 +185,11 @@ function getAndSendUpcomingEvents(storage) {
       console.log('No students found...');
     } else {
       students.forEach((student) => {
-        console.log('WOoOOOOO');
-
         // if (student.canvas && student.canvas.subscribedCourses &&
         //     student.canvas.subscribedCourses.length > 0) {
 
           // const subscribedCourses = student.canvas.subscribedCourses;
-        const messagePayload = [];
+        const messages = [];
 
         // Retrieve the student's upcoming canvas events and send it to them
         getStudentCanvasUpcomingEvents(student.canvas.token)
@@ -211,24 +204,19 @@ function getAndSendUpcomingEvents(storage) {
               const trimmedEvent = {
                 title: event.title,
                 subtitle,
-                image_url: `${SERVER_URL}assets/thumbsup.png`,
-                buttons: [
-                  {
-                    title: 'View Event',
-                    type: 'web_url',
-                    url: event.url,
-                  },
-                ],
+                item_url: event.html_url,
               };
 
-              messagePayload.push(trimmedEvent);
+              messages.push(trimmedEvent);
             });
 
             if (student.fb) {
               const fbData = student.fb;
               const { senderID } = fbData;
               sendFBTextMessage(senderID, 'You have upcoming events!');
-              sendTemplatedMessage(senderID, messagePayload);
+              messages.forEach((message) => {
+                sendTemplatedMessage(senderID, [message]);
+              });
             } else {
               console.log('no fb data for student');
             }
