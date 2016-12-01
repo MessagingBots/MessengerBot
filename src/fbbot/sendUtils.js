@@ -9,6 +9,30 @@ const CANVAS_API = config.CANVAS_API;
 const SERVER_URL = config.SERVER_URL;
 const fbConfig = config.fb;
 
+// Return on the prommise for assignments
+module.exports.getCourseAssignments = function (userCanvasToken, courseID){
+  return new Promise ((resolve, reject) => {
+    const axiosOptions = {
+      url: `${CANVAS_API}courses/${courseID}/assignments`,
+      headers: {
+        Authorization: `Bearer ${userCanvasToken}`,
+      },
+      params: {},
+    };
+
+    axios.request(axiosOptions)
+      .then((res) => {
+        const assignments = res.data;
+        resolve(assignments);
+      })
+      .catch((err) => {
+        console.log('Error retrieving assignments for course with id = ' + courseID);
+        console.log(err);
+        reject(err);
+      });
+  });
+};
+
 module.exports.getUserCanvasCourses = function (userCanvasToken) {
   return new Promise((resolve, reject) => {
     const axiosOptions = {

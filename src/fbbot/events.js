@@ -4,6 +4,64 @@ import config from 'config-heroku';
 import sendUtils from './sendUtils';
 
 const ONE_COURSE_API = config.ONE_COURSE_API;
+const SERVER_URL = config.SERVER_URL;
+
+var moment = require('moment');
+
+// Get an array of all the assignments given a courseID.
+// Return that array of assigments, Where each assigment is simplified with lesss fields.
+function getCourseAssignments (userId, controller, courseID){
+  return new Promise((resolve, reject) => {
+    controller.storage.students.getByFBSenderID(userId, (err, user) => {
+      if (err) {
+        console.log('Error finding user');
+        console.log(err);
+        reject('I\'m sorry there was an error.');
+      } else if (!user) {
+        console.log('We couldn\'t find a user for this account, please link your account');
+        reject('We couldn\'t find a user for this account, please link your account');
+      } else if (user.canvas.token) {
+
+        // Get the user's assignments  for this course on Canvas
+        sendUtils.getCourseAssignments(user.canvas.token, courseID)
+        .then((assignments) => {
+          //console.log(assignments);
+          let simplifiedAssigments = [];
+          assignments.forEach((assignment) => {
+            let simplifiedAssigment = {
+              id: assignment.id,
+              name: assignment.name,
+              created_at: assignment.created_at,
+              due_at: assignment.due_at,
+              points_possible: assignment.points_possible,
+              html_url: assignment.html_url
+            };
+            simplifiedAssigments.push(simplifiedAssigment);
+            //console.log(simplifiedAssigment);
+          });
+
+          // Sort them by the due date.
+          simplifiedAssigments.sort(function (a,b){
+            return a.due_at < b.due_at;
+          });
+          //console.log(simplifiedAssigments);
+
+          // Send it all back. All the assiments with minimalistic fields.
+          resolve(simplifiedAssigments);
+        })
+        .catch((error) => {
+          console.log('Error getting assignments');
+          console.log(error);
+          reject(error);
+        });
+      } // else if (user.canvas.token)...
+      else {
+        console.log('We couldn\'t find a token for this account, please link your account');
+        reject('We couldn\'t find a token for this account, please link your account');
+      }
+    });
+  });
+}
 
 function getSchedule(userId, controller) {
   return new Promise((resolve, reject) => {
@@ -156,42 +214,45 @@ function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
             console.log(innerUser);
           }
         });
-      }
-    });
-  }
+    }
+  });
+}
 
-  // Take in the Botkit controller and attach events to it
-  module.exports = (controller) => {
-    // This is triggered when a user clicks the send-to-messenger plugin
-    controller.on('facebook_optin', (bot, message) => {
-      bot.reply(message, 'Welcome, friend');
-    });
 
-    // This is triggered when a user clicks the send-to-messenger plugin
-    controller.on('message_delivered', (bot, message) => {
-      console.log(message);
-      console.log('message delivered');
-    });
+// Take in the Botkit controller and attach events to it
+module.exports = (controller) => {
+  // This is triggered when a user clicks the send-to-messenger plugin
+  controller.on('facebook_optin', (bot, message) => {
+    bot.reply(message, 'Welcome, friend');
+  });
 
-    // This is triggered when a user clicks the send-to-messenger plugin
-    // payload comes in the JSON form: { action: String, data: Object }
-    controller.on('facebook_postback', (bot, message) => {
-      console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~');
-      console.log('Facebook Postback Occured!');
-      console.log('message');
-      console.log(message);
+  // This is triggered when a user clicks the send-to-messenger plugin
+  controller.on('message_delivered', (bot, message) => {
+    console.log(message);
+    console.log('message delivered');
+  });
 
-      const payload = JSON.parse(message.payload);
-      const { action, data } = payload;
+  // This is triggered when a user clicks the send-to-messenger plugin
+  // payload comes in the JSON form: { action: String, data: Object }
+  controller.on('facebook_postback', (bot, message) => {
+    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~');
+    console.log('Facebook Postback Occured!');
+    //console.log('message');
+    //console.log(message);
 
-      switch (action) {
-        case 'watchCourse':
+    const payload = JSON.parse(message.payload);
+    const { action, data } = payload;
+
+    switch (action) {
+      case 'watchCourse':
         alterUserCourseSubscriptions(message.user, data.course, controller, true);
         break;
-        case 'removeCourse':
+
+      case 'removeCourse':
         alterUserCourseSubscriptions(message.user, data.course, controller, false);
         break;
-        case 'getSchedule':
+
+      case 'getSchedule':
         // Get the user's schedule using Canvas and One UF search
         console.log('Student Schedule Postback!');
         bot.reply(message, 'Here are your courses for this semester.');
@@ -206,46 +267,95 @@ function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
           bot.reply(message, e);
         });
         break;
-        case 'getUpcomingHw':
-        console.log('Upcomming HW Postback!');
-        if (!data){
-          bot.reply(message, 'Here are your upcomming HW from all your classes.');
-        }else{
-          bot.reply(message, 'Here are your upcomming HW from all the class with ID = ' + data);
-        }
-        // retrieveUpcomingHw
-        // sendMsg(upcommingHw)
-        break;
-        case 'getAnnouncements':
-        console.log('Class Announcements Postback!');
-        if (!data){
-          bot.reply(message, 'Here are the announcements from all your classes.');
-        }
-        else {
-          bot.reply(message, 'Here are the announcements from the class with ID = ' + data);
-        }
-        // retrieveAnnouncemnets
-        // sendMsg(announcements)
-        break;
-        case 'getGrades':
-        console.log('Class Grades Postback!');
-        if (!data){
-          bot.reply(message, 'Here are the grades from all your classes.');
-        }
-        else {
-          bot.reply(message, 'Here are the grades from the class with ID = ' + data);
-        }
-        // retrieveGrades
-        // sendMsg(grades)
-        break;
-        case 'help':
-        console.log('Help Postback!');
-        bot.reply(message, 'Here are some of the things you can use me for.');
-        // sendMsg(help)
-        break;
-        default:
-      }
-    });
 
-    return controller;
-  };
+      case 'getUpcomingHw':
+        console.log('Assignments Postback!');
+        if (!data){
+          bot.reply(message, 'Here are your upcomming assignments from all your classes.');
+        }else{
+          bot.reply(message, 'Here are your upcomming assignments from ' + data.course_name);
+
+          getCourseAssignments(message.user, controller, data.course_id, bot, message)
+          .then((assignmentsMsg) => {
+            assignmentsMsg.forEach((tempAssigmentMsg) => {
+              console.log("*************************");
+              console.log(tempAssigmentMsg.name);
+
+              var dueDateFormatted = moment(tempAssigmentMsg.due_at);
+              var dateNow = moment();
+
+              if (dueDateFormatted.isAfter(dateNow)){
+                const attachment = {
+                  type: 'template',
+                  payload: {
+                    template_type: 'generic',
+                    elements: [
+                      {
+                        title: tempAssigmentMsg.name,
+                        subtitle: 'Due Date: ' + dueDateFormatted.format('MMMM Do YYYY, h:mm:ss a') + ', Points: ' + tempAssigmentMsg.points_possible,
+                        //item_url: tempAssigmentMsg.html_url,
+                        default_action: {
+                          type: 'web_url',
+                          url: tempAssigmentMsg.html_url,
+                        },
+                        //image_url: `${SERVER_URL}assets/upcomming_hm.png`,
+                      }
+                    ],
+                  },
+                };
+                bot.reply(message, {attachment});
+              }
+
+            });
+          })
+          .catch((e) => {
+            console.log('Error');
+            console.log(e);
+            bot.reply(message, e);
+          });
+        }
+        break;
+
+      case 'getAnnouncements':
+      console.log('Class Announcements Postback!');
+      if (!data){
+        bot.reply(message, 'Here are the announcements from all your classes.');
+      }
+      else {
+        bot.reply(message, 'Here are the announcements from ' + data.course_name);
+      }
+      // retrieveAnnouncemnets
+      // sendMsg(announcements)
+      break;
+      case 'getGrades':
+      console.log('Class Grades Postback!');
+      if (!data){
+        bot.reply(message, 'Here are the grades from all your classes.');
+      }
+      else {
+        bot.reply(message, 'Here are the grades from ' + data.course_name);
+
+        getCourseAssignments(message.user, controller, data.course_id, bot, message)
+        .then((gradesMsg) => {
+          bot.reply(message, gradesMsg);
+        })
+        .catch((e) => {
+          console.log('Error');
+          console.log(e);
+          bot.reply(message, e);
+        });
+      }
+      // retrieveGrades
+      // sendMsg(grades)
+      break;
+      case 'help':
+      console.log('Help Postback!');
+      bot.reply(message, 'Here are some of the things you can use me for.');
+      // sendMsg(help)
+      break;
+      default:
+    }
+  });
+
+  return controller;
+};
