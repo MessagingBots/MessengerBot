@@ -9,8 +9,11 @@ const CANVAS_API = config.CANVAS_API;
 const SERVER_URL = config.SERVER_URL;
 const fbConfig = config.fb;
 
-// Return on the prommise for assignments
-module.exports.getCourseAssignments = function (userCanvasToken, courseID) {
+/*
+* Return on the prommise for assignments
+*
+*/
+exports.getCourseAssignments = function (userCanvasToken, courseID) {
   return new Promise ((resolve, reject) => {
     const axiosOptions = {
       url: `${CANVAS_API}courses/${courseID}/assignments`,
@@ -33,8 +36,11 @@ module.exports.getCourseAssignments = function (userCanvasToken, courseID) {
   });
 };
 
-// Return on the prommise for announcments
-module.exports.getCourseAnnouncements = function (userCanvasToken, courseID) {
+/*
+* Return on the prommise for announcments
+*
+*/
+exports.getCourseAnnouncements = function (userCanvasToken, courseID) {
   return new Promise ((resolve, reject) => {
     const axiosOptions = {
       url: `${CANVAS_API}announcements`,
@@ -61,7 +67,11 @@ module.exports.getCourseAnnouncements = function (userCanvasToken, courseID) {
   });
 };
 
-module.exports.getUserCanvasCourses = function (userCanvasToken) {
+/*
+* Return on the prommise for courses
+*
+*/
+exports.getUserCanvasCourses = function (userCanvasToken) {
   return new Promise((resolve, reject) => {
     const axiosOptions = {
       url: `${CANVAS_API}courses?include=sections`,
@@ -84,6 +94,12 @@ module.exports.getUserCanvasCourses = function (userCanvasToken) {
         reject(err);
       });
   });
+};
+
+exports.arrayObjectIndexOf = function (array, searchTerm, prop) {
+  return array.map(element =>
+    element[prop]
+  ).indexOf(searchTerm);
 };
 
 /*

@@ -164,47 +164,54 @@ module.exports = (controller) => {
         bot.reply(message, 'We couldn\'t find a user for this account, please link your account');
       } else if (user.canvas.token) {
         sendUtils.getUserCanvasCourses(user.canvas.token)
-        .then((courses) => {
-          // Will store the element we are adding to the message attachment payload
-          let newCourseElement = {};
-          courses.forEach((course) => {
-            if (user.canvas.subscribedCourses &&
-              user.canvas.subscribedCourses.includes(course.id)) {
-                if (!course.name) {
-                  course.name = 'No name for course';
-                }
-                const courseURL = `${CANVAS_URL}courses/${course.id}`;
-                newCourseElement = {
-                  title: course.name,
-                  image_url: `${SERVER_URL}assets/thumbsup.png`,
-                  buttons: [
-                    {
-                      title: 'Open Course',
-                      type: 'web_url',
-                      url: courseURL,
-                    },
-                    {
-                      title: 'Remove Course',
-                      type: 'postback',
-                      payload: JSON.stringify({
-                        action: 'removeCourse',
-                        data: {
-                          course: course.id,
-                        },
-                      }),
-                    },
-                  ],
-                };
 
-                attachment.payload.elements.push(newCourseElement);
-              }
+          .then((courses) => {
+            // Will store the element we are adding to the message attachment payload
+            let newCourseElement = {};
+
+            courses.forEach((course) => {
+              // Check if the user has subscribed courses, and if this course matches
+              if (user.canvas.subscribedCourses) {
+                const subscribedCourses = user.canvas.subscribedCourses;
+                const indexOfCourse = sendUtils.arrayObjectIndexOf(subscribedCourses, course.id, 'id');
+
+                if (indexOfCourse > -1) {
+                  if (!course.name) {
+                    course.name = 'No name for course';
+                  }
+                  const courseURL = `${CANVAS_URL}courses/${course.id}`;
+                  newCourseElement = {
+                    title: course.name,
+                    image_url: `${SERVER_URL}assets/thumbsup.png`,
+                    buttons: [
+                      {
+                        title: 'Open Course',
+                        type: 'web_url',
+                        url: courseURL,
+                      },
+                      {
+                        title: 'Remove Course',
+                        type: 'postback',
+                        payload: JSON.stringify({
+                          action: 'removeCourse',
+                          data: {
+                            course: subscribedCourses[indexOfCourse],
+                          },
+                        }),
+                      },
+                    ],
+                  };
+
+                  attachment.payload.elements.push(newCourseElement);
+                }
+              } // End of if (user.canvas.subscribedCourses) {...}
             }); // End of courses.forEach(...)
 
             // Send courses to user
             if (attachment.payload.elements.length <= 0) {
               bot.reply(message, 'You haven\'t subscribed to any courses ');
             } else {
-              bot.reply(message, 'You\'re subscribed courses are: ');
+              bot.reply(message, 'Your subscribed courses are: ');
               bot.reply(message, { attachment }, (botErr) => {
                 if (botErr) {
                   console.log('ERROR');
@@ -249,32 +256,34 @@ module.exports = (controller) => {
         bot.reply(message, 'We couldn\'t find a user for this account, please link your account');
       } else if (user.canvas.token) {
         sendUtils.getUserCanvasCourses(user.canvas.token)
-        .then((courses) => {
-          // Will store the element we are adding to the message attachment payload
-          let newCourseElement = {};
-          courses.forEach((course) => {
-            if (!course.name) {
-              course.name = 'No name for course';
-            }
-            newCourseElement = {
-              title: course.name,
-              image_url: `${SERVER_URL}assets/thumbsup.png`,
-              buttons: [
-                {
-                  title: 'Watch Course',
-                  type: 'postback',
-                  payload: JSON.stringify({
-                    action: 'watchCourse',
-                    data: {
-                      course: course.id,
-                    },
-                  }),
-                },
-              ],
-            };
-            attachment.payload.elements.push(newCourseElement);
-          }); // End of courses.forEach(...)
-
+          .then((courses) => {
+            // Will store the element we are adding to the message attachment payload
+            let newCourseElement = {};
+            courses.forEach((course) => {
+              if (!course.name) {
+                course.name = 'No name for course';
+              }
+              newCourseElement = {
+                title: course.name,
+                image_url: `${SERVER_URL}assets/thumbsup.png`,
+                buttons: [
+                  {
+                    title: 'Watch Course',
+                    type: 'postback',
+                    payload: JSON.stringify({
+                      action: 'watchCourse',
+                      data: {
+                        course: {
+                          id: course.id,
+                          title: course.name,
+                        },
+                      },
+                    }),
+                  },
+                ],
+              };
+              attachment.payload.elements.push(newCourseElement);
+            }); // End of courses.forEach(...)
           // Send courses to user
           console.log('replying!');
           bot.reply(message, { attachment }, (botErr) => {

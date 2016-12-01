@@ -243,12 +243,12 @@ function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
 
       // Is the user subscribing or removing a course?
       if (subscribe) {
-        if (subscribedCourses.includes(course)) {
+        if (subscribedCourses.some(subscribedCourse => subscribedCourse.id === course.id)) {
           return;
         }
         subscribedCourses.push(course);
       } else {
-        const indexOfCourse = subscribedCourses.indexOf(course);
+        const indexOfCourse = sendUtils.arrayObjectIndexOf(subscribedCourses, course.id, 'id');
         if (indexOfCourse > -1) {
           subscribedCourses.splice(indexOfCourse, 1);
         }
@@ -289,8 +289,6 @@ module.exports = (controller) => {
   controller.on('facebook_postback', (bot, message) => {
     console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~');
     console.log('Facebook Postback Occured!');
-    // console.log('message');
-    // console.log(message);
 
     const payload = JSON.parse(message.payload);
     const { action, data } = payload;
@@ -453,3 +451,5 @@ module.exports = (controller) => {
 
   return controller;
 };
+
+exports.alterUserCourseSubscriptions = alterUserCourseSubscriptions;
