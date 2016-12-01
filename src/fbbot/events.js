@@ -4,15 +4,14 @@ import config from 'config-heroku';
 import sendUtils from './sendUtils';
 
 const ONE_COURSE_API = config.ONE_COURSE_API;
-const SERVER_URL = config.SERVER_URL;
 const CANVAS_URL = config.CANVAS_URL;
 
 
-var moment = require('moment');
+const moment = require('moment');
 
 // Get an array of all the assignments given a courseID.
 // Return that array of assigments, Where each assigment is simplified with lesss fields.
-function getCourseAssignments (userId, controller, courseID){
+function getCourseAssignments(userId, controller, courseID) {
   return new Promise((resolve, reject) => {
     controller.storage.students.getByFBSenderID(userId, (err, user) => {
       if (err) {
@@ -23,30 +22,29 @@ function getCourseAssignments (userId, controller, courseID){
         console.log('We couldn\'t find a user for this account, please link your account');
         reject('We couldn\'t find a user for this account, please link your account');
       } else if (user.canvas.token) {
-
         // Get the user's assignments  for this course on Canvas
         sendUtils.getCourseAssignments(user.canvas.token, courseID)
         .then((assignments) => {
-          //console.log(assignments);
-          let simplifiedAssigments = [];
+          // console.log(assignments);
+          const simplifiedAssigments = [];
           assignments.forEach((assignment) => {
-            let simplifiedAssigment = {
+            const simplifiedAssigment = {
               id: assignment.id,
               name: assignment.name,
               created_at: assignment.created_at,
               due_at: assignment.due_at,
               points_possible: assignment.points_possible,
-              html_url: assignment.html_url
+              html_url: assignment.html_url,
             };
             simplifiedAssigments.push(simplifiedAssigment);
-            //console.log(simplifiedAssigment);
+            // console.log(simplifiedAssigment);
           });
 
           // Sort them by the due date.
-          simplifiedAssigments.sort(function (a,b){
+          simplifiedAssigments.sort( function (a, b) {
             return a.due_at < b.due_at;
           });
-          //console.log(simplifiedAssigments);
+          // console.log(simplifiedAssigments);
 
           // Send it all back. All the assiments with minimalistic fields.
           resolve(simplifiedAssigments);
@@ -56,8 +54,7 @@ function getCourseAssignments (userId, controller, courseID){
           console.log(error);
           reject(error);
         });
-      } // else if (user.canvas.token)...
-      else {
+      } else {
         console.log('We couldn\'t find a token for this account, please link your account');
         reject('We couldn\'t find a token for this account, please link your account');
       }
@@ -67,7 +64,7 @@ function getCourseAssignments (userId, controller, courseID){
 
 // Get an array of all the announcements given a courseID
 // REturn the array of the announcements where each announcment now has simplified fileds.
-function getCourseAnnouncements(userId, controller, courseID){
+function getCourseAnnouncements(userId, controller, courseID) {
   return new Promise((resolve, reject) => {
     controller.storage.students.getByFBSenderID(userId, (err, user) => {
       if (err) {
@@ -78,29 +75,27 @@ function getCourseAnnouncements(userId, controller, courseID){
         console.log('We couldn\'t find a user for this account, please link your account');
         reject('We couldn\'t find a user for this account, please link your account');
       } else if (user.canvas.token) {
-
         // Get the user's announcments  for this course on Canvas
         sendUtils.getCourseAnnouncements(user.canvas.token, courseID)
         .then((announcments) => {
-
-          //console.log(announcments);
-          let simplifiedAnnouncments = [];
+          // console.log(announcments);
+          const simplifiedAnnouncments = [];
 
           announcments.forEach((announcment) => {
-            let simplifiedAnnouncment = {
+            const simplifiedAnnouncment = {
               id: announcment.id,
               title: announcment.title,
               posted_at: announcment.posted_at,
               context_code: announcment.context_code,
               html_url: announcment.html_url,
-              message: announcment.message
+              message: announcment.message,
             };
             simplifiedAnnouncments.push(simplifiedAnnouncment);
-            //console.log(simplifiedAnnouncment);
+            // console.log(simplifiedAnnouncment);
           });
 
           // Sort them by the posted date.
-          simplifiedAnnouncments.sort(function (a,b){
+          simplifiedAnnouncments.sort(function (a, b) {
             return a.posted_at < b.posted_at;
           });
           console.log(simplifiedAnnouncments);
@@ -113,8 +108,7 @@ function getCourseAnnouncements(userId, controller, courseID){
           console.log(error);
           reject(error);
         });
-      }
-      else {
+      } else {
         console.log('We couldn\'t find a token for this account, please link your account');
         reject('We couldn\'t find a token for this account, please link your account');
       }
@@ -277,7 +271,6 @@ function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
   });
 }
 
-
 // Take in the Botkit controller and attach events to it
 module.exports = (controller) => {
   // This is triggered when a user clicks the send-to-messenger plugin
@@ -296,8 +289,8 @@ module.exports = (controller) => {
   controller.on('facebook_postback', (bot, message) => {
     console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~');
     console.log('Facebook Postback Occured!');
-    //console.log('message');
-    //console.log(message);
+    // console.log('message');
+    // console.log(message);
 
     const payload = JSON.parse(message.payload);
     const { action, data } = payload;
@@ -329,21 +322,21 @@ module.exports = (controller) => {
 
       case 'getUpcomingHw':
         console.log('Assignments Postback!');
-        if (!data){
+        if (!data) {
           bot.reply(message, 'Here are your upcomming assignments from all your classes.');
-        }else{
+        } else {
           bot.reply(message, 'Here are your upcomming assignments from ' + data.course_name);
 
           getCourseAssignments(message.user, controller, data.course_id, bot, message)
           .then((assignmentsMsg) => {
             assignmentsMsg.forEach((tempAssigmentMsg) => {
-              //console.log("*************************");
-              //console.log(tempAssigmentMsg.name);
+              // console.log("*************************");
+              // console.log(tempAssigmentMsg.name);
 
-              var dueDateFormatted = moment(tempAssigmentMsg.due_at);
-              var dateNow = moment();
+              const dueDateFormatted = moment(tempAssigmentMsg.due_at);
+              const dateNow = moment();
 
-              if (dueDateFormatted.isAfter(dateNow)){
+              if (dueDateFormatted.isAfter(dateNow)) {
                 const attachment = {
                   type: 'template',
                   payload: {
@@ -352,19 +345,18 @@ module.exports = (controller) => {
                       {
                         title: tempAssigmentMsg.name,
                         subtitle: 'Due Date: ' + dueDateFormatted.format('MMMM Do YYYY, h:mm:ss a') + ', Points: ' + tempAssigmentMsg.points_possible,
-                        //item_url: tempAssigmentMsg.html_url,
+                        // item_url: tempAssigmentMsg.html_url,
                         default_action: {
                           type: 'web_url',
                           url: tempAssigmentMsg.html_url,
                         },
                         //image_url: `${SERVER_URL}assets/upcomming_hm.png`,
-                      }
+                      },
                     ],
                   },
                 };
-                bot.reply(message, {attachment});
+                bot.reply(message, attachment);
               }
-
             });
           })
           .catch((e) => {
@@ -377,15 +369,13 @@ module.exports = (controller) => {
 
       case 'getAnnouncements':
         console.log('Class Announcements Postback!');
-        if (!data){
+        if (!data) {
           bot.reply(message, 'Here are the announcements from all your classes.');
-        }
-        else {
+        } else {
           bot.reply(message, 'Here are the announcements from ' + data.course_name);
 
           getCourseAnnouncements(message.user, controller, data.course_id, bot, message)
-          .then((announcementsMsg) =>{
-
+          .then((announcementsMsg) => {
             const attachment = {
               type: 'template',
               payload: {
@@ -399,32 +389,31 @@ module.exports = (controller) => {
                     title: 'More Announcements',
                     type: 'web_url',
                     url: CANVAS_URL + 'courses/' + data.course_id + '/announcements',
-                  }
+                  },
                 ],
-              }
+              },
             };
-
-            for (var i = 0; i < (announcementsMsg.length && 4); i++){
-              var tempAnnouncementMsg = announcementsMsg[i];
-              var postedDate = moment(tempAnnouncementMsg.posted_at).format('MMMM Do YYYY, h:mm:ss a');
-              var newAnnouncementElement = {
-                  title: tempAnnouncementMsg.title,
-                  subtitle: 'Posted at: ' + postedDate,
-                  default_action: {
+            for (let i = 0; i < (announcementsMsg.length && 4); i += 1) {
+              const tempAnnouncementMsg = announcementsMsg[i];
+              const postedDate = moment(tempAnnouncementMsg.posted_at).format('MMMM Do YYYY, h:mm:ss a');
+              const newAnnouncementElement = {
+                title: tempAnnouncementMsg.title,
+                subtitle: 'Posted at: ' + postedDate,
+                default_action: {
+                  type: 'web_url',
+                  url: tempAnnouncementMsg.html_url,
+                },
+                buttons: [
+                  {
+                    title: 'Read More',
                     type: 'web_url',
                     url: tempAnnouncementMsg.html_url,
                   },
-                  buttons: [
-                    {
-                      title: 'Read More',
-                      type: 'web_url',
-                      url: tempAnnouncementMsg.html_url,
-                    }
-                  ]
+                ],
               };
               attachment.payload.elements.push(newAnnouncementElement);
             }
-            bot.reply(message, {attachment});
+            bot.reply(message, { attachment });
           })
           .catch((e) => {
             console.log('Error');
@@ -436,24 +425,21 @@ module.exports = (controller) => {
 
       case 'getGrades':
         console.log('Class Grades Postback!');
-        if (!data){
+        if (!data) {
           bot.reply(message, 'Here are the grades from all your classes.');
-        }
-        else {
+        } else {
           bot.reply(message, 'Here are the grades from ' + data.course_name);
 
-          getCourseAssignments(message.user, controller, data.course_id, bot, message)
-          .then((gradesMsg) => {
-            bot.reply(message, gradesMsg);
-          })
-          .catch((e) => {
-            console.log('Error');
-            console.log(e);
-            bot.reply(message, e);
-          });
+          // getCourseAssignments(message.user, controller, data.course_id, bot, message)
+          // .then((gradesMsg) => {
+          //   bot.reply(message, gradesMsg);
+          // })
+          // .catch((e) => {
+          //   console.log('Error');
+          //   console.log(e);
+          //   bot.reply(message, e);
+          // });
         }
-        // retrieveGrades
-        // sendMsg(grades)
         break;
 
       case 'help':

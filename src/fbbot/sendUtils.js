@@ -10,7 +10,7 @@ const SERVER_URL = config.SERVER_URL;
 const fbConfig = config.fb;
 
 // Return on the prommise for assignments
-module.exports.getCourseAssignments = function (userCanvasToken, courseID){
+module.exports.getCourseAssignments = function (userCanvasToken, courseID) {
   return new Promise ((resolve, reject) => {
     const axiosOptions = {
       url: `${CANVAS_API}courses/${courseID}/assignments`,
@@ -34,7 +34,7 @@ module.exports.getCourseAssignments = function (userCanvasToken, courseID){
 };
 
 // Return on the prommise for announcments
-module.exports.getCourseAnnouncements = function (userCanvasToken, courseID){
+module.exports.getCourseAnnouncements = function (userCanvasToken, courseID) {
   return new Promise ((resolve, reject) => {
     const axiosOptions = {
       url: `${CANVAS_API}announcements`,
