@@ -243,7 +243,7 @@ function scheduleAlertFunctions(cbArray, storage) {
   (function loop() {
     let now = new Date();
     if ((now.getHours() === 11 && now.getMinutes() === 0) ||
-          (now.getHours() === 16 && now.getMinutes() === 0)) {
+          (now.getHours() === 16 && now.getMinutes() === 5)) {
       const restOfCbs = cbArray.slice(1); // Get all cbs after the first
       cbArray[0](storage);                // Call first cb
       restOfCbs.forEach((cb) => {         // Call next cbs with delay of 5 seconds
