@@ -14,10 +14,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs')
 
 // Confiure /fbbot routes
-const router = express.Router();
-require('./routes/routes')(router);
-
-app.use('/fbbot', router);
+// const router = express.Router();
+// require('./routes/routes')(router);
+//
+// app.use('/fbbot', router);
 
 app.set('port', 3124);
 

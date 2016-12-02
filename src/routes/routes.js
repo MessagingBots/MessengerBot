@@ -2,6 +2,7 @@
 import config from 'config-heroku';
 import signup from './signup';
 import login from './login';
+import fbbotRouter from '../fbbot/routes/routes';
 
 const DB_URL = config.dbURL;
 const API_URL = config.API_URL;
@@ -21,6 +22,9 @@ module.exports = (app, passport, storage) => {
   app.get('/', (req, res) => {
     res.render('index.ejs');
   });
+
+  // Setup FB bot routes
+  app.use('/fbbot', fbbotRouter);
 
   app.get('/login', login.get);
   app.post('/login', login.login(passport));
