@@ -10,6 +10,8 @@ module.exports = {
       "consistent-return": 0,
       "no-console": 0,
       "linebreak-style": 0,
-       "allowNamedFunctions": 0 
+       "allowNamedFunctions": 0 ,
+       "prefer-template": 0 
+
     }
 };

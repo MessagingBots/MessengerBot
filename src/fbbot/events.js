@@ -1,12 +1,9 @@
 import axios from 'axios';
 import config from 'config-heroku';
-
 import sendUtils from './sendUtils';
 
 const ONE_COURSE_API = config.ONE_COURSE_API;
 const CANVAS_URL = config.CANVAS_URL;
-
-
 const moment = require('moment');
 
 // Get an array of all the grades given a courseID.
@@ -33,6 +30,7 @@ function getCourseGrades(userId, controller, courseID) {
                 id: submission.id,
                 score: submission.score,
                 graded_at: submission.graded_at,
+                submitted_at: submission.submitted_at,
                 assignment_id: submission.assignment.id,
                 assignment_name: submission.assignment.name,
                 assignment_created_at: submission.assignment.created_at,
@@ -107,7 +105,7 @@ function getCourseAssignments(userId, controller, courseID) {
 
           // Sort them by the due date.
           simplifiedAssigments.sort(function (a, b) {
-            return a.due_at < b.due_at;
+            return a.due_at > b.due_at;
           });
           // console.log(simplifiedAssigments);
 
@@ -163,7 +161,7 @@ function getCourseAnnouncements(userId, controller, courseID) {
           simplifiedAnnouncments.sort(function (a, b) {
             return a.posted_at < b.posted_at;
           });
-          console.log(simplifiedAnnouncments);
+          // console.log(simplifiedAnnouncments);
 
           // Send it all back. All the assiments with minimalistic fields.
           resolve(simplifiedAnnouncments);
@@ -199,6 +197,9 @@ function getCoursesEnrolled(userId, controller) {
         .then((courses) => {
           const simplifiedCourses = [];
           courses.forEach((tempCourse) => {
+            if (!tempCourse.name) {
+              tempCourse.name = 'No name for course';
+            }
             const simplifiedCourse = {
               course_id: tempCourse.id,
               course_name: tempCourse.name,
@@ -382,15 +383,12 @@ function alterUserCourseSubscriptions(userId, course, controller, subscribe) {
 * Display all the grades given a course ID.
 * First query the grades and then display as a list of generics
 */
-function displayCourseGrades(bot, message, controller, data) {
-  bot.reply(message, 'Here are the grades from ' + data.course_name);
-
-  getCourseGrades(message.user, controller, data.course_id, bot, message)
+function displayCourseGrades(convo, message, controller, data) {
+  getCourseGrades(message.user, controller, data.course_id)
   .then((gradesMsg) => {
     if (gradesMsg.grades.length > 0) {
+      convo.say(`Here are the grades from ${data.course_name}`);
       gradesMsg.grades.forEach((gradeMsg) => {
-        // console.log("*************************");
-        // console.log(gradeMsg);
         const gradedDate = moment(gradeMsg.graded_at);
         const attachment = {
           type: 'template',
@@ -409,18 +407,18 @@ function displayCourseGrades(bot, message, controller, data) {
             ],
           },
         };
-        bot.reply(message, { attachment });
+        convo.say({ attachment });
       });
       // Total grade as now.
-      bot.reply(message, 'Total grade: ' + gradesMsg.computed_current_score + '%');
+      convo.say(`Total grade: ${gradesMsg.computed_current_score} %`);
     } else {
-      bot.reply(message, 'There are no grades at this time. Check back later.');
+      convo.say('There are no grades at this time. Check back later.');
     }
   })
   .catch((e) => {
     console.log('Error');
     console.log(e);
-    bot.reply(message, e);
+    convo.say(e);
   });
 }
 
@@ -428,15 +426,13 @@ function displayCourseGrades(bot, message, controller, data) {
 * Display all the upcoming assignments given a course ID.
 * First query the upcoming assignments and then display as a list of generics
 */
-function displayCourseUpcomingHw(bot, message, controller, data) {
-  getCourseAssignments(message.user, controller, data.course_id, bot, message)
+function displayCourseUpcomingHw(convo, message, controller, data) {
+  getCourseAssignments(message.user, controller, data.course_id)
   .then((assignmentsMsg) => {
     if (assignmentsMsg.length > 0) {
-      bot.reply(message, 'Here are your upcoming assignments from ' + data.course_name);
+      convo.say('Here are your upcoming assignments from ' + data.course_name);
 
       assignmentsMsg.forEach((tempAssigmentMsg) => {
-        //  console.log(tempAssigmentMsg.name);
-
         const dueDateFormatted = moment(tempAssigmentMsg.due_at);
         const dateNow = moment();
 
@@ -459,17 +455,17 @@ function displayCourseUpcomingHw(bot, message, controller, data) {
               ],
             },
           };
-          bot.reply(message, { attachment });
+          convo.say({ attachment });
         }
       });
     } else {
-      bot.reply(message, 'There are no assignments posted at this time. Check back later.');
+      convo.say('There are no assignments posted at this time. Check back later.');
     }
   })
   .catch((e) => {
     console.log('Error');
     console.log(e);
-    bot.reply(message, e);
+    convo.say(e);
   });
 }
 
@@ -477,11 +473,13 @@ function displayCourseUpcomingHw(bot, message, controller, data) {
 * Display all the announcments given a course ID.
 * First query the announcments and then display as a list of generics
 */
-function displayCourseAnnouncements(bot, message, controller, data) {
-  getCourseAnnouncements(message.user, controller, data.course_id, bot, message)
+function displayCourseAnnouncements(convo, message, controller, data) {
+  getCourseAnnouncements(message.user, controller, data.course_id)
   .then((announcementsMsg) => {
+    //  console.log(announcementsMsg);
     if (announcementsMsg.length > 0) {
-      bot.reply(message, 'Here are the announcements from ' + data.course_name);
+
+      convo.say('Here are the announcements from ' + data.course_name);
 
       // Facebook allows to send 2 to 4 items in a vertical list. So if ther is
       // only one announcement we have to send it other way, using a generic template.
@@ -510,7 +508,7 @@ function displayCourseAnnouncements(bot, message, controller, data) {
             ],
           },
         };
-        bot.reply(message, { attachment });
+        convo.say({ attachment });
       } else {
         // If more than two announcements, send them as list.
         const attachment = {
@@ -550,16 +548,17 @@ function displayCourseAnnouncements(bot, message, controller, data) {
           };
           attachment.payload.elements.push(newAnnouncementElement);
         }
-        bot.reply(message, { attachment });
+        convo.say({ attachment });
       }
+
     } else {
-      bot.reply(message, 'There are no announcements posted at this time. Check back later.');
+      convo.say('There are no announcements posted at this time. Check back later.');
     }
   })
   .catch((e) => {
     console.log('Error');
     console.log(e);
-    bot.reply(message, e);
+    convo.say(e);
   });
 }
 
@@ -612,47 +611,59 @@ module.exports = (controller) => {
 
       case 'getUpcomingHw':
         console.log('Assignments Postback!');
-        if (!data) {
-          bot.reply(message, 'Here are your upcoming assignments from all your classes.');
-          getCoursesEnrolled(message.user, controller, bot, message)
-          .then((courses) => {
-            courses.forEach((tempCourse) => {
-              displayCourseUpcomingHw(bot, message, controller, tempCourse);
+
+        bot.botkit.createConversation(bot, message, (err, convo) => {
+          convo.activate();
+          if (!data) {
+            convo.say('Here are your upcoming assignments from all your classes.');
+            getCoursesEnrolled(message.user, controller)
+            .then((courses) => {
+              courses.forEach((tempCourse) => {
+                displayCourseUpcomingHw(convo, message, controller, tempCourse);
+              });
             });
-          });
-        } else {
-          displayCourseUpcomingHw(bot, message, controller, data);
-        }
+          } else {
+            displayCourseUpcomingHw(convo, message, controller, data);
+          }
+        });
         break;
 
       case 'getAnnouncements':
         console.log('Class Announcements Postback!');
-        if (!data) {
-          bot.reply(message, 'Here are the announcements from all your classes.');
-          getCoursesEnrolled(message.user, controller, bot, message)
-          .then((courses) => {
-            courses.forEach((tempCourse) => {
-              displayCourseAnnouncements(bot, message, controller, tempCourse);
+
+        bot.botkit.createConversation(bot, message, (err, convo) => {
+          convo.activate();
+          if (!data) {
+            convo.say('Here are the announcements from all your classes.');
+            getCoursesEnrolled(message.user, controller)
+            .then((courses) => {
+              courses.forEach((tempCourse) => {
+                displayCourseAnnouncements(convo, message, controller, tempCourse);
+              });
             });
-          });
-        } else {
-          displayCourseAnnouncements(bot, message, controller, data);
-        }
+          } else {
+            displayCourseAnnouncements(convo, message, controller, data);
+          }
+        });
         break;
 
       case 'getGrades':
         console.log('Class Grades Postback!');
-        if (!data) {
-          bot.reply(message, 'Here are the grades from all your classes.');
-          getCoursesEnrolled(message.user, controller, bot, message)
-          .then((courses) => {
-            courses.forEach((tempCourse) => {
-              displayCourseGrades(bot, message, controller, tempCourse);
+
+        bot.botkit.createConversation(bot, message, (err, convo) => {
+          convo.activate();
+          if (!data) {
+            convo.say('Here are the grades from all your classes.');
+            getCoursesEnrolled(message.user, controller)
+            .then((courses) => {
+              courses.forEach((tempCourse) => {
+                displayCourseGrades(convo, message, controller, tempCourse);
+              });
             });
-          });
-        } else {
-          displayCourseGrades(bot, message, controller, data);
-        }
+          } else {
+            displayCourseGrades(convo, message, controller, data);
+          }
+        });
         break;
 
       case 'help':
