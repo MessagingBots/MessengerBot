@@ -231,24 +231,55 @@ function getAndSendUpcomingEvents(storage) {
   }); // End of storage.students.all(...)
 }
 
+
+/**
+ * scheduleAlertFunctions - Schedule our callbacks to
+ *
+ * @param  {type} cbArray description
+ * @param  {type} storage description
+ * @return {type}         description
+ */
+function scheduleAlertFunctions(cbArray, storage) {
+  (function loop() {
+    let now = new Date();
+    if ((now.getHours() === 11 && now.getMinutes() === 0) ||
+          (now.getHours() === 16 && now.getMinutes() === 0)) {
+      const restOfCbs = cbArray.slice(1); // Get all cbs after the first
+      cbArray[0](storage);                // Call first cb
+      restOfCbs.forEach((cb) => {         // Call next cbs with delay of 5 seconds
+        setTimeout(() => {
+          cb(storage);
+        }, 5000);
+      });
+    }
+    now = new Date();                  // allow for time passing
+    const delay = 60000 - (now % 60000); // exact ms to next minute interval
+    setTimeout(loop, delay);
+  })();
+}
+
 module.exports = (storage) => {
   console.log('students');
 
   const dayInMilliSeconds = 1000 * 60 * 60 * 24;
   const halfDay = dayInMilliSeconds / 2;
 
-  // Call once, then set the interval
-  getAndSendUpcomingEvents(storage);
-  // @TODO Uncomment setInterval when ready to test
-  setInterval(() => {
-    getAndSendUpcomingEvents(storage);
-  }, halfDay);
 
-  setTimeout(() => {
-    getAndSendTodoList(storage);
-    // @TODO Uncomment setInterval when ready to test
-    setInterval(() => {
-      getAndSendTodoList(storage);
-    }, halfDay);
-  }, 5000);
+
+  scheduleAlertFunctions([getAndSendUpcomingEvents, getAndSendTodoList], storage)
+
+  // // Call once, then set the interval
+  // getAndSendUpcomingEvents(storage);
+  // // @TODO Uncomment setInterval when ready to test
+  // setInterval(() => {
+  //   getAndSendUpcomingEvents(storage);
+  // }, halfDay);
+  //
+  // setTimeout(() => {
+  //   getAndSendTodoList(storage);
+  //   // @TODO Uncomment setInterval when ready to test
+  //   setInterval(() => {
+  //     getAndSendTodoList(storage);
+  //   }, halfDay);
+  // }, 5000);
 };
