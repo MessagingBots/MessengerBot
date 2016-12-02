@@ -562,6 +562,45 @@ function displayCourseAnnouncements(convo, message, controller, data) {
   });
 }
 
+
+/**
+ * sendHelpCommandMessage - Generate the list of help commands and send them to the user
+ *
+ * @param  {type} bot     description
+ * @param  {type} message description
+ * @return {type}         description
+ */
+function sendHelpCommandMessage(bot, message) {
+  const commands = [
+    {
+      name: 'help',
+      value: 'Learn about what I can do',
+    },
+    {
+      name: 'courses',
+      value: 'Display your active courses on Canvas',
+    },
+    {
+      name: 'linking',
+      value: 'Link your Facebook profile to make use of the bot',
+    },
+    {
+      name: 'Even More!',
+      value: 'You can open the persistent menu next to your typing input to ' +
+       'do things like view your schedule, view upcoming assignments, ' +
+       'announcements, and more!',
+    },
+  ];
+
+  let helpMsg = '';
+  bot.startConversation(message, (err, convo) => {
+    commands.forEach((command) => {
+      helpMsg = `${command.name}: ${command.value}`;
+      convo.say(helpMsg);
+    });
+  });
+}
+
 // Take in the Botkit controller and attach events to it
 module.exports = (controller) => {
   // This is triggered when a user clicks the send-to-messenger plugin
@@ -578,9 +617,6 @@ module.exports = (controller) => {
   // This is triggered when a user clicks the send-to-messenger plugin
   // payload comes in the JSON form: { action: String, data: Object }
   controller.on('facebook_postback', (bot, message) => {
-    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~');
-    console.log('Facebook Postback Occured!');
-
     const payload = JSON.parse(message.payload);
     const { action, data } = payload;
 
@@ -667,8 +703,8 @@ module.exports = (controller) => {
         break;
 
       case 'help':
-        console.log('Help Postback!');
-        bot.reply(message, 'Here are some of the things you can use me for.');
+        bot.reply(message, 'Here are some of the things you can ask me to do.');
+        sendHelpCommandMessage(bot, message);
         break;
 
       default:

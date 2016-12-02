@@ -15,6 +15,7 @@ import canvasSubscriptionService from './canvasSubscriptionService';
 
 const DB_URL = config.dbURL;
 const storage = require('./db/config')({ dbURL: DB_URL });
+
 const publicPath = path.resolve('public');
 const app = express();
 

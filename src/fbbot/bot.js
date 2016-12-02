@@ -124,7 +124,7 @@ const createUserIfNew = (id, ts) => {
     else if (!user) {
       console.log('Creating new user!');
       console.log(user);
-      controller.storage.students.save({ 'fb.senderID': id, created_at: ts });
+      controller.storage.students.insert({ 'fb.senderID': id, created_at: ts });
     } else {
       console.log('User found');
       console.log(user);
