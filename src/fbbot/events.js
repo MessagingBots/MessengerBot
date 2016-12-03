@@ -298,7 +298,7 @@ function getSchedule(userId, controller) {
                   if (canvasSectionName === section.number) {
                     section.meetTimes.forEach((meet) => {
                       // Build string of meeting times for the section
-                      courseSectionTimes += `${meet.meetDays}: ${meet.meetTimeBegin} - ${meet.meetTimeEnd}\n`;
+                      courseSectionTimes += `${meet.meetDays}: ${meet.meetTimeBegin} - ${meet.meetTimeEnd} at ${meet.meetBuilding}${meet.meetRoom}\n`;
                     });
                     return true;
                   }
