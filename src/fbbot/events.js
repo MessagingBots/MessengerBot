@@ -488,66 +488,69 @@ function displayCourseUpcomingHw(convo, message, controller, data) {
 * First query the announcments and then display as a list of generics
 */
 function displayCourseAnnouncements(convo, message, controller, data) {
-  getCourseAnnouncements(message.user, controller, data.course_id)
-  .then((announcementsMsg) => {
-    //  console.log(announcementsMsg);
-    if (announcementsMsg.length > 0) {
+  return new Promise(function(resolve, reject) {
+    getCourseAnnouncements(message.user, controller, data.course_id)
+    .then((announcementsMsg) => {
+      const returnAttachments = [];
+      returnAttachments.push(`Here are your announcements for ${data.course_name}`);
+      if (announcementsMsg.length > 0) {
+        for (let i = 0; i < (announcementsMsg.length && 3); i += 1) {
+          const postedDate = moment(announcementsMsg[i].posted_at).format('MMMM Do YYYY, h:mm:ss a');
 
-      convo.say('Here are the announcements from ' + data.course_name);
-      for (let i = 0; i < (announcementsMsg.length && 3); i += 1) {
-        const postedDate = moment(announcementsMsg[i].posted_at).format('MMMM Do YYYY, h:mm:ss a');
-        const attachment = {
-          type: 'template',
-          payload: {
-            template_type: 'generic',
-            elements: [
-              {
-                title: announcementsMsg[i].title,
-                subtitle: 'Posted at: ' + postedDate,
-                // default_action: {
-                //   type: 'web_url',
-                //   url: announcementsMsg[i].html_url,
-                // },
-                buttons: [
-                  {
-                    title: 'Read More',
-                    type: 'web_url',
-                    url: announcementsMsg[i].html_url,
-                  },
-                ],
-              },
-            ],
-          },
-        };
-        convo.say({ attachment });
-      }
+          const attachment = {
+            type: 'template',
+            payload: {
+              template_type: 'generic',
+              elements: [
+                {
+                  title: announcementsMsg[i].title,
+                  subtitle: 'Posted at: ' + postedDate,
+                  // default_action: {
+                  //   type: 'web_url',
+                  //   url: announcementsMsg[i].html_url,
+                  // },
+                  buttons: [
+                    {
+                      title: 'Read More',
+                      type: 'web_url',
+                      url: announcementsMsg[i].html_url,
+                    },
+                  ],
+                },
+              ],
+            },
+          };
+          returnAttachments.push({ attachment });
+        }
 
-      if (announcementsMsg.length > 3) {
-        // If more than 3 announcements, send a button for mor.
-        const attachment = {
-          type: 'template',
-          payload: {
-            template_type: 'button',
-            text: 'What to read older announcements?',
-            buttons: [
-              {
-                title: 'More Announcements',
-                type: 'web_url',
-                url: CANVAS_URL + 'courses/' + data.course_id + '/announcements',
-              },
-            ],
-          },
-        };
-        convo.say({ attachment });
+        if (announcementsMsg.length > 3) {
+          // If more than 3 announcements, send a button for mor.
+          const attachment = {
+            type: 'template',
+            payload: {
+              template_type: 'button',
+              text: 'What to read older announcements?',
+              buttons: [
+                {
+                  title: 'More Announcements',
+                  type: 'web_url',
+                  url: CANVAS_URL + 'courses/' + data.course_id + '/announcements',
+                },
+              ],
+            },
+          };
+          returnAttachments.push({ attachment });
+        }
+      } else {
+        returnAttachments.push('There are no announcements posted at this time. Check back later.');
       }
-    } else {
-      convo.say('There are no announcements posted at this time. Check back later.');
-    }
-  })
-  .catch((e) => {
-    console.log('Error');
-    console.log(e);
-    convo.say(e);
+      resolve(returnAttachments);
+    })
+    .catch((e) => {
+      console.log('Error');
+      console.log(e);
+      reject(e);
+    });
   });
 }
 
@@ -654,26 +657,38 @@ module.exports = (controller) => {
 
       case 'getAnnouncements':
         console.log('Class Announcements Postback!');
-
-        bot.startConversation(message, (err, convo) => {
           if (!data) {
-            convo.say('Here are the announcements from all your classes.');
             getCoursesEnrolled(message.user, controller)
             .then((courses) => {
-              courses.forEach((tempCourse) => {
-                displayCourseAnnouncements(convo, message, controller, tempCourse);
+              bot.startConversation(message, (err, convo) => {
+                convo.say('Here are the announcements from all your classes.');
+                courses.forEach((tempCourse) => {
+                  convo.say('');  // Hack, needed for convo to work
+                  displayCourseAnnouncements(convo, message, controller, tempCourse)
+                  .then((returnAttachments) => {
+                    returnAttachments.forEach((a) => {
+                      convo.say(a);
+                    });
+                  });
+                });
               });
             });
           } else {
-            displayCourseAnnouncements(convo, message, controller, data);
+            bot.startConversation(message, (err, convo) => {
+              displayCourseAnnouncements(convo, message, controller, data)
+              .then((returnAttachments) => {
+                returnAttachments.forEach((a) => {
+                  convo.say(a);
+                });
+              });
+            });
           }
-        });
         break;
 
       case 'getGrades':
         console.log('Class Grades Postback!');
 
-        bot.startConversation( message, (err, convo) => {
+        bot.startConversation(message, (err, convo) => {
           if (!data) {
             convo.say('Here are the grades from all your classes.');
             getCoursesEnrolled(message.user, controller)
