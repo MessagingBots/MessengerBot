@@ -403,6 +403,13 @@ function displayCourseGrades(convo, message, controller, data) {
                   type: 'web_url',
                   url: gradeMsg.assignment_html_url,
                 },
+                // buttons: [
+                //   {
+                //     title: 'View in Canvas',
+                //     type: 'web_url',
+                //     url: gradeMsg.assignment_html_url,
+                //   },
+                // ],
               },
             ],
           },
@@ -446,11 +453,18 @@ function displayCourseUpcomingHw(convo, message, controller, data) {
                   title: tempAssigmentMsg.name,
                   subtitle: 'Due Date: ' + dueDateFormatted.format('MMMM Do YYYY, h:mm:ss a') + ', Points: ' + tempAssigmentMsg.points_possible,
                   // item_url: tempAssigmentMsg.html_url,
-                  default_action: {
-                    type: 'web_url',
-                    url: tempAssigmentMsg.html_url,
-                  },
+                  // default_action: {
+                  //   type: 'web_url',
+                  //   url: tempAssigmentMsg.html_url,
+                  // },
                   //image_url: `${SERVER_URL}assets/upcoming_hm.png`,
+                  buttons: [
+                    {
+                      title: 'View in Canvas',
+                      type: 'web_url',
+                      url: tempAssigmentMsg.html_url,
+                    },
+                  ],
                 },
               ],
             },
@@ -480,28 +494,25 @@ function displayCourseAnnouncements(convo, message, controller, data) {
     if (announcementsMsg.length > 0) {
 
       convo.say('Here are the announcements from ' + data.course_name);
-
-      // Facebook allows to send 2 to 4 items in a vertical list. So if ther is
-      // only one announcement we have to send it other way, using a generic template.
-      if (announcementsMsg.length < 2) {
-        const postedDate = moment(announcementsMsg[0].posted_at).format('MMMM Do YYYY, h:mm:ss a');
+      for (let i = 0; i < (announcementsMsg.length && 3); i += 1) {
+        const postedDate = moment(announcementsMsg[i].posted_at).format('MMMM Do YYYY, h:mm:ss a');
         const attachment = {
           type: 'template',
           payload: {
             template_type: 'generic',
             elements: [
               {
-                title: announcementsMsg[0].title,
+                title: announcementsMsg[i].title,
                 subtitle: 'Posted at: ' + postedDate,
-                default_action: {
-                  type: 'web_url',
-                  url: announcementsMsg[0].html_url,
-                },
+                // default_action: {
+                //   type: 'web_url',
+                //   url: announcementsMsg[i].html_url,
+                // },
                 buttons: [
                   {
                     title: 'Read More',
                     type: 'web_url',
-                    url: announcementsMsg[0].html_url,
+                    url: announcementsMsg[i].html_url,
                   },
                 ],
               },
@@ -509,16 +520,15 @@ function displayCourseAnnouncements(convo, message, controller, data) {
           },
         };
         convo.say({ attachment });
-      } else {
-        // If more than two announcements, send them as list.
+      }
+
+      if (announcementsMsg.length > 3) {
+        // If more than 3 announcements, send a button for mor.
         const attachment = {
           type: 'template',
           payload: {
-            template_type: 'list',
-            top_element_style: 'compact',
-            elements: [
-
-            ],
+            template_type: 'button',
+            text: 'What to read older announcements?',
             buttons: [
               {
                 title: 'More Announcements',
@@ -528,29 +538,8 @@ function displayCourseAnnouncements(convo, message, controller, data) {
             ],
           },
         };
-        for (let i = 0; i < (announcementsMsg.length && 4); i += 1) {
-          const tempAnnouncementMsg = announcementsMsg[i];
-          const postedDate = moment(tempAnnouncementMsg.posted_at).format('MMMM Do YYYY, h:mm:ss a');
-          const newAnnouncementElement = {
-            title: tempAnnouncementMsg.title,
-            subtitle: 'Posted at: ' + postedDate,
-            default_action: {
-              type: 'web_url',
-              url: tempAnnouncementMsg.html_url,
-            },
-            buttons: [
-              {
-                title: 'Read More',
-                type: 'web_url',
-                url: tempAnnouncementMsg.html_url,
-              },
-            ],
-          };
-          attachment.payload.elements.push(newAnnouncementElement);
-        }
         convo.say({ attachment });
       }
-
     } else {
       convo.say('There are no announcements posted at this time. Check back later.');
     }
@@ -648,8 +637,7 @@ module.exports = (controller) => {
       case 'getUpcomingHw':
         console.log('Assignments Postback!');
 
-        bot.botkit.createConversation(bot, message, (err, convo) => {
-          convo.activate();
+        bot.startConversation(message, (err, convo) => {
           if (!data) {
             convo.say('Here are your upcoming assignments from all your classes.');
             getCoursesEnrolled(message.user, controller)
@@ -667,8 +655,7 @@ module.exports = (controller) => {
       case 'getAnnouncements':
         console.log('Class Announcements Postback!');
 
-        bot.botkit.createConversation(bot, message, (err, convo) => {
-          convo.activate();
+        bot.startConversation(message, (err, convo) => {
           if (!data) {
             convo.say('Here are the announcements from all your classes.');
             getCoursesEnrolled(message.user, controller)
@@ -686,8 +673,7 @@ module.exports = (controller) => {
       case 'getGrades':
         console.log('Class Grades Postback!');
 
-        bot.botkit.createConversation(bot, message, (err, convo) => {
-          convo.activate();
+        bot.startConversation( message, (err, convo) => {
           if (!data) {
             convo.say('Here are the grades from all your classes.');
             getCoursesEnrolled(message.user, controller)
