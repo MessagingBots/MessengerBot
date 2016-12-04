@@ -3,6 +3,7 @@ import config from 'config-heroku';
 import request from 'request';
 
 import sendUtils from './sendUtils';
+import { sendHelpCommandMessage } from './events';
 
 const access_token = config.fb.pageAccessToken;
 const verify_token = config.fb.verifyToken;
@@ -338,7 +339,11 @@ module.exports = (controller) => {
         ]
       }
     };
-    bot.reply(message, {attachment});
+    bot.reply(message, { attachment });
+  });
+
+  controller.hears('^help$', 'message_received', (bot, message) => {
+    sendHelpCommandMessage(bot, message);
   });
 
   // user says anything else

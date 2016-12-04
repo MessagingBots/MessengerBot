@@ -554,6 +554,27 @@ function displayCourseAnnouncements(convo, message, controller, data) {
   });
 }
 
+function getQuickReplyExamples() {
+  return {
+    text: 'Example commands',
+    quick_replies: [
+      {
+        content_type: 'text',
+        title: 'Announcements',
+        payload: JSON.stringify({
+          action: 'getAnnouncements',
+        }),
+      },
+      {
+        content_type: 'text',
+        title: 'Upcoming HW',
+        payload: JSON.stringify({
+          action: 'getUpcomingHw',
+        }),
+      },
+    ],
+  };
+}
 
 /**
  * sendHelpCommandMessage - Generate the list of help commands and send them to the user
@@ -586,15 +607,17 @@ function sendHelpCommandMessage(bot, message) {
 
   let helpMsg = '';
   bot.startConversation(message, (err, convo) => {
+    convo.say('Here are some of the things you can ask me to do.');
     commands.forEach((command) => {
       helpMsg = `${command.name}: ${command.value}`;
       convo.say(helpMsg);
     });
+    convo.say(getQuickReplyExamples());
   });
 }
 
 // Take in the Botkit controller and attach events to it
-module.exports = (controller) => {
+exports.eventHandler = (controller) => {
   // This is triggered when a user clicks the send-to-messenger plugin
   controller.on('facebook_optin', (bot, message) => {
     bot.reply(message, 'Welcome, friend');
@@ -606,110 +629,116 @@ module.exports = (controller) => {
     console.log('message delivered');
   });
 
-  // This is triggered when a user clicks the send-to-messenger plugin
+  // This is triggered when a user clicks a postback
   // payload comes in the JSON form: { action: String, data: Object }
   controller.on('facebook_postback', (bot, message) => {
-    const payload = JSON.parse(message.payload);
-    const { action, data } = payload;
+    console.log('postback');
+    try {
+      const payload = JSON.parse(message.payload);
+      const { action, data } = payload;
 
-    switch (action) {
-      case 'watchCourse':
-        alterUserCourseSubscriptions(message.user, data.course, controller, true);
-        break;
+      console.log('POSTBACK!!');
+      console.log(payload);
+      switch (action) {
+        case 'watchCourse':
+          alterUserCourseSubscriptions(message.user, data.course, controller, true);
+          break;
 
-      case 'removeCourse':
-        alterUserCourseSubscriptions(message.user, data.course, controller, false);
-        break;
+        case 'removeCourse':
+          alterUserCourseSubscriptions(message.user, data.course, controller, false);
+          break;
 
-      case 'getSchedule':
-        // Get the user's schedule using Canvas and One UF search
-        console.log('Student Schedule Postback!');
-        bot.reply(message, 'Here are your courses for this semester.');
+        case 'getSchedule':
+          // Get the user's schedule using Canvas and One UF search
+          console.log('Student Schedule Postback!');
+          bot.reply(message, 'Here are your courses for this semester.');
 
-        getSchedule(message.user, controller, bot, message)
-        .then((scheduleMsg) => {
-          bot.reply(message, scheduleMsg);
-        })
-        .catch((e) => {
-          console.log('Error');
-          console.log(e);
-          bot.reply(message, e);
-        });
-        break;
+          getSchedule(message.user, controller, bot, message)
+          .then((scheduleMsg) => {
+            bot.reply(message, scheduleMsg);
+          })
+          .catch((e) => {
+            console.log('Error');
+            console.log(e);
+            bot.reply(message, e);
+          });
+          break;
 
-      case 'getUpcomingHw':
-        console.log('Assignments Postback!');
+        case 'getUpcomingHw':
+          console.log('Assignments Postback!');
 
-        bot.startConversation(message, (err, convo) => {
-          if (!data) {
-            convo.say('Here are your upcoming assignments from all your classes.');
-            getCoursesEnrolled(message.user, controller)
-            .then((courses) => {
-              courses.forEach((tempCourse) => {
-                displayCourseUpcomingHw(convo, message, controller, tempCourse);
-              });
-            });
-          } else {
-            displayCourseUpcomingHw(convo, message, controller, data);
-          }
-        });
-        break;
-
-      case 'getAnnouncements':
-        console.log('Class Announcements Postback!');
-          if (!data) {
-            getCoursesEnrolled(message.user, controller)
-            .then((courses) => {
-              bot.startConversation(message, (err, convo) => {
-                convo.say('Here are the announcements from all your classes.');
+          bot.startConversation(message, (err, convo) => {
+            if (!data) {
+              convo.say('Here are your upcoming assignments from all your classes.');
+              getCoursesEnrolled(message.user, controller)
+              .then((courses) => {
                 courses.forEach((tempCourse) => {
-                  convo.say('');  // Hack, needed for convo to work
-                  displayCourseAnnouncements(convo, message, controller, tempCourse)
-                  .then((returnAttachments) => {
-                    returnAttachments.forEach((a) => {
-                      convo.say(a);
+                  displayCourseUpcomingHw(convo, message, controller, tempCourse);
+                });
+              });
+            } else {
+              displayCourseUpcomingHw(convo, message, controller, data);
+            }
+          });
+          break;
+
+        case 'getAnnouncements':
+          console.log('Class Announcements Postback!');
+            if (!data) {
+              getCoursesEnrolled(message.user, controller)
+              .then((courses) => {
+                bot.startConversation(message, (err, convo) => {
+                  convo.say('Here are the announcements from all your classes.');
+                  courses.forEach((tempCourse) => {
+                    convo.say('');  // Hack, needed for convo to work
+                    displayCourseAnnouncements(convo, message, controller, tempCourse)
+                    .then((returnAttachments) => {
+                      returnAttachments.forEach((a) => {
+                        convo.say(a);
+                      });
                     });
                   });
                 });
               });
-            });
-          } else {
-            bot.startConversation(message, (err, convo) => {
-              displayCourseAnnouncements(convo, message, controller, data)
-              .then((returnAttachments) => {
-                returnAttachments.forEach((a) => {
-                  convo.say(a);
+            } else {
+              bot.startConversation(message, (err, convo) => {
+                displayCourseAnnouncements(convo, message, controller, data)
+                .then((returnAttachments) => {
+                  returnAttachments.forEach((a) => {
+                    convo.say(a);
+                  });
                 });
               });
-            });
-          }
-        break;
+            }
+          break;
 
-      case 'getGrades':
-        console.log('Class Grades Postback!');
+        case 'getGrades':
+          console.log('Class Grades Postback!');
 
-        bot.startConversation(message, (err, convo) => {
-          if (!data) {
-            convo.say('Here are the grades from all your classes.');
-            getCoursesEnrolled(message.user, controller)
-            .then((courses) => {
-              courses.forEach((tempCourse) => {
-                displayCourseGrades(convo, message, controller, tempCourse);
+          bot.startConversation(message, (err, convo) => {
+            if (!data) {
+              convo.say('Here are the grades from all your classes.');
+              getCoursesEnrolled(message.user, controller)
+              .then((courses) => {
+                courses.forEach((tempCourse) => {
+                  displayCourseGrades(convo, message, controller, tempCourse);
+                });
               });
-            });
-          } else {
-            displayCourseGrades(convo, message, controller, data);
-          }
-        });
-        break;
+            } else {
+              displayCourseGrades(convo, message, controller, data);
+            }
+          });
+          break;
 
-      case 'help':
-        bot.reply(message, 'Here are some of the things you can ask me to do.');
-        sendHelpCommandMessage(bot, message);
-        break;
+        case 'help':
+          sendHelpCommandMessage(bot, message);
+          break;
 
-      default:
-        break;
+        default:
+          break;
+      }
+    } catch (exception) {
+      console.log('Exception! JSON parse did not work');
     }
   });
 
@@ -717,3 +746,5 @@ module.exports = (controller) => {
 };
 
 exports.alterUserCourseSubscriptions = alterUserCourseSubscriptions;
+
+exports.sendHelpCommandMessage = sendHelpCommandMessage;

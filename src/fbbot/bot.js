@@ -4,6 +4,8 @@ import Botkit from 'botkit';
 import config from 'config-heroku';
 import request from 'request';
 
+import { eventHandler } from './events';
+
 const access_token = config.fb.pageAccessToken;
 const verify_token = config.fb.verifyToken;
 const DB_URL = config.dbURL;
@@ -109,7 +111,7 @@ request({
 });
 
 // Attach our events to the controller
-controller = require('./events')(controller);
+controller = eventHandler(controller);
 
 // Attach 'hears' to the controller
 controller = require('./hears')(controller);
@@ -142,23 +144,46 @@ const handler = (obj) => {
       entry.messaging.forEach((m) => {
         const facebook_message = m;
 
+        console.log('FACEBOOK MESSAGE IS');
+        console.log(facebook_message);
         // Normal message
         if (facebook_message.message) {
-          message = {
-            text: facebook_message.message.text,
-            user: facebook_message.sender.id,
-            channel: facebook_message.sender.id,
-            timestamp: facebook_message.timestamp,
-            seq: facebook_message.message.seq,
-            mid: facebook_message.message.mid,
-            attachments: facebook_message.message.attachments,
-          };
+          // First we check if this is a quick-reply with a payload
+          if (facebook_message.message.quick_reply &&
+              facebook_message.message.quick_reply.payload) {
+            const quickReply = facebook_message.message.quick_reply;
+            message = {
+              payload: quickReply.payload,
+              user: facebook_message.sender.id,
+              channel: facebook_message.sender.id,
+              timestamp: facebook_message.timestamp,
+            };
 
+            // Need to trigger a postback for a payload
+            controller.trigger('facebook_postback', [fbBot, message]);
 
-          if (!facebook_message.message.is_echo) {
-            // Save if a new user, and not if an echo
-            console.log('Creating new user');
-            createUserIfNew(facebook_message.sender.id, facebook_message.timestamp);
+            message = {
+              text: quickReply.payload,
+              user: facebook_message.sender.id,
+              channel: facebook_message.sender.id,
+              timestamp: facebook_message.timestamp,
+            };
+          } else {
+            message = {
+              text: facebook_message.message.text,
+              user: facebook_message.sender.id,
+              channel: facebook_message.sender.id,
+              timestamp: facebook_message.timestamp,
+              seq: facebook_message.message.seq,
+              mid: facebook_message.message.mid,
+              attachments: facebook_message.message.attachments,
+            };
+
+            if (!facebook_message.message.is_echo) {
+              // Save if a new user, and not if an echo
+              console.log('Creating new user');
+              createUserIfNew(facebook_message.sender.id, facebook_message.timestamp);
+            }
           }
 
           controller.receiveMessage(fbBot, message);
