@@ -434,52 +434,49 @@ function displayCourseGrades(convo, message, controller, data) {
 * First query the upcoming assignments and then display as a list of generics
 */
 function displayCourseUpcomingHw(convo, message, controller, data) {
-  getCourseAssignments(message.user, controller, data.course_id)
-  .then((assignmentsMsg) => {
-    if (assignmentsMsg.length > 0) {
-      convo.say('Here are your upcoming assignments from ' + data.course_name);
+  return new Promise(function(resolve, reject) {
+    getCourseAssignments(message.user, controller, data.course_id)
+    .then((assignmentsMsg) => {
+      const returnAttachments = [];
+      returnAttachments.push(`Here are your announcements for ${data.course_name}`);
+      if (assignmentsMsg.length > 0) {
+        assignmentsMsg.forEach((tempAssigmentMsg) => {
+          const dueDateFormatted = moment(tempAssigmentMsg.due_at);
+          const dateNow = moment();
 
-      assignmentsMsg.forEach((tempAssigmentMsg) => {
-        const dueDateFormatted = moment(tempAssigmentMsg.due_at);
-        const dateNow = moment();
-
-        if (dueDateFormatted.isAfter(dateNow)) {
-          const attachment = {
-            type: 'template',
-            payload: {
-              template_type: 'generic',
-              elements: [
-                {
-                  title: tempAssigmentMsg.name,
-                  subtitle: 'Due Date: ' + dueDateFormatted.format('MMMM Do YYYY, h:mm:ss a') + ', Points: ' + tempAssigmentMsg.points_possible,
-                  // item_url: tempAssigmentMsg.html_url,
-                  // default_action: {
-                  //   type: 'web_url',
-                  //   url: tempAssigmentMsg.html_url,
-                  // },
-                  //image_url: `${SERVER_URL}assets/upcoming_hm.png`,
-                  buttons: [
-                    {
-                      title: 'View in Canvas',
-                      type: 'web_url',
-                      url: tempAssigmentMsg.html_url,
-                    },
-                  ],
-                },
-              ],
-            },
-          };
-          convo.say({ attachment });
-        }
-      });
-    } else {
-      convo.say('There are no assignments posted at this time. Check back later.');
-    }
-  })
-  .catch((e) => {
-    console.log('Error');
-    console.log(e);
-    convo.say(e);
+          if (dueDateFormatted.isAfter(dateNow)) {
+            const attachment = {
+              type: 'template',
+              payload: {
+                template_type: 'generic',
+                elements: [
+                  {
+                    title: tempAssigmentMsg.name,
+                    subtitle: 'Due Date: ' + dueDateFormatted.format('MMMM Do YYYY, h:mm:ss a') + ', Points: ' + tempAssigmentMsg.points_possible,
+                    buttons: [
+                      {
+                        title: 'View in Canvas',
+                        type: 'web_url',
+                        url: tempAssigmentMsg.html_url,
+                      },
+                    ],
+                  },
+                ],
+              },
+            };
+            returnAttachments.push({ attachment });
+          }
+        });
+      } else {
+        returnAttachments.push('There are no assignments posted at this time. Check back later.');
+      }
+      resolve(returnAttachments);
+    })
+    .catch((e) => {
+      console.log('Error');
+      console.log(e);
+      reject(e);
+    });
   });
 }
 
@@ -666,20 +663,34 @@ exports.eventHandler = (controller) => {
 
         case 'getUpcomingHw':
           console.log('Assignments Postback!');
-
-          bot.startConversation(message, (err, convo) => {
-            if (!data) {
-              convo.say('Here are your upcoming assignments from all your classes.');
-              getCoursesEnrolled(message.user, controller)
-              .then((courses) => {
+          if (!data) {
+            getCoursesEnrolled(message.user, controller)
+            .then((courses) => {
+              bot.startConversation(message, (err, convo) => {
+                convo.say('Here are your upcoming assignments from all your classes.');
                 courses.forEach((tempCourse) => {
-                  displayCourseUpcomingHw(convo, message, controller, tempCourse);
+                  convo.say('');
+                  displayCourseUpcomingHw(convo, message, controller, tempCourse)
+                  .then((returnAttachments) => {
+                    returnAttachments.forEach((a) => {
+                      console.log('a is');
+                      console.log(a);
+                      convo.say(a);
+                    });
+                  });
                 });
               });
-            } else {
-              displayCourseUpcomingHw(convo, message, controller, data);
-            }
-          });
+            });
+          } else {
+            bot.startConversation(message, (err, convo) => {
+              displayCourseUpcomingHw(convo, message, controller, data)
+              .then((returnAttachments) => {
+                returnAttachments.forEach((a) => {
+                  convo.say(a);
+                });
+              });
+            });
+          }
           break;
 
         case 'getAnnouncements':
