@@ -360,6 +360,13 @@ module.exports = (controller) => {
     controller.trigger('facebook_postback', [bot, message]);
   });
 
+  controller.hears('^schedule', 'message_received', (bot, message) => {
+    message.payload = JSON.stringify({
+      action: 'getSchedule',
+    });
+    controller.trigger('facebook_postback', [bot, message]);
+  });
+
 
   // user says anything else
   // controller.hears('(.*)', 'message_received', (bot, message) => {

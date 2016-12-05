@@ -252,7 +252,7 @@ function scheduleAlertFunctions(cbArray, storage) {
         }, 5000);
       });
     }
-    now = new Date();                  // allow for time passing
+    now = new Date();                    // allow for time passing
     const delay = 60000 - (now % 60000); // exact ms to next minute interval
     setTimeout(loop, delay);
   })();
@@ -261,7 +261,7 @@ function scheduleAlertFunctions(cbArray, storage) {
 module.exports = (storage) => {
   console.log('students');
 
-  scheduleAlertFunctions([getAndSendUpcomingEvents, getAndSendTodoList], storage)
+  scheduleAlertFunctions([getAndSendUpcomingEvents, getAndSendTodoList], storage);
 
   // const dayInMilliSeconds = 1000 * 60 * 60 * 24;
   // const halfDay = dayInMilliSeconds / 2;
@@ -271,7 +271,6 @@ module.exports = (storage) => {
   // setInterval(() => {
   //   getAndSendUpcomingEvents(storage);
   // }, halfDay);
-  //
   // setTimeout(() => {
   //   getAndSendTodoList(storage);
   //   // @TODO Uncomment setInterval when ready to test
