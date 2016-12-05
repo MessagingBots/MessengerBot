@@ -662,65 +662,69 @@ exports.eventHandler = (controller) => {
           break;
 
         case 'getUpcomingHw':
-          console.log('Assignments Postback!');
-          if (!data) {
-            getCoursesEnrolled(message.user, controller)
-            .then((courses) => {
-              bot.startConversation(message, (err, convo) => {
-                convo.say('Here are your upcoming assignments from all your classes.');
-                courses.forEach((tempCourse) => {
-                  convo.say('');
-                  displayCourseUpcomingHw(convo, message, controller, tempCourse)
-                  .then((returnAttachments) => {
-                    returnAttachments.forEach((a) => {
-                      console.log('a is');
-                      console.log(a);
-                      convo.say(a);
+          bot.createConversation(message, (err, convo) => {
+            if (!data) {
+              convo.addMessage('Here are the assignments from all your classes.');
+              getCoursesEnrolled(message.user, controller)
+                .then((courses) => {
+                  const responses = Promise.all(courses.map(course =>
+                    displayCourseUpcomingHw(convo, message, controller, course)
+                  ));
+                  responses.then((res) => {
+                    res.forEach((element) => {
+                      element.forEach((elm) => {
+                        convo.addMessage(elm);
+                        console.log('adding message', elm);
+                      });
                     });
+                    convo.activate();
+                    console.log('activate!');
                   });
                 });
-              });
-            });
-          } else {
-            bot.startConversation(message, (err, convo) => {
+            } else {
               displayCourseUpcomingHw(convo, message, controller, data)
-              .then((returnAttachments) => {
-                returnAttachments.forEach((a) => {
-                  convo.say(a);
+                .then((returnAttachments) => {
+                  returnAttachments.forEach((a) => {
+                    convo.addMessage(a);
+                  });
+                  convo.activate();
+                  console.log('activate!');
                 });
-              });
-            });
-          }
+            }
+          });
           break;
 
         case 'getAnnouncements':
-          console.log('Class Announcements Postback!');
+          bot.createConversation(message, (err, convo) => {
             if (!data) {
+              convo.addMessage('Here are the announcements from all your classes.');
               getCoursesEnrolled(message.user, controller)
-              .then((courses) => {
-                bot.startConversation(message, (err, convo) => {
-                  convo.say('Here are the announcements from all your classes.');
-                  courses.forEach((tempCourse) => {
-                    convo.say('');  // Hack, needed for convo to work
-                    displayCourseAnnouncements(convo, message, controller, tempCourse)
-                    .then((returnAttachments) => {
-                      returnAttachments.forEach((a) => {
-                        convo.say(a);
+                .then((courses) => {
+                  const responses = Promise.all(courses.map(course =>
+                    displayCourseAnnouncements(convo, message, controller, course)
+                  ));
+                  responses.then((res) => {
+                    res.forEach((element) => {
+                      element.forEach((elm) => {
+                        convo.addMessage(elm);
+                        console.log('adding message', elm);
                       });
                     });
+                    convo.activate();
+                    console.log('activate!');
                   });
                 });
-              });
             } else {
-              bot.startConversation(message, (err, convo) => {
-                displayCourseAnnouncements(convo, message, controller, data)
+              displayCourseAnnouncements(convo, message, controller, data)
                 .then((returnAttachments) => {
                   returnAttachments.forEach((a) => {
-                    convo.say(a);
+                    convo.addMessage(a);
                   });
+                  convo.activate();
+                  console.log('activate!');
                 });
-              });
             }
+          });
           break;
 
         case 'getGrades':
