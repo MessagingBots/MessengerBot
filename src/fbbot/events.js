@@ -438,7 +438,7 @@ function displayCourseUpcomingHw(convo, message, controller, data) {
     getCourseAssignments(message.user, controller, data.course_id)
     .then((assignmentsMsg) => {
       const returnAttachments = [];
-      returnAttachments.push(`Here are your announcements for ${data.course_name}`);
+      returnAttachments.push(`Here are your assignments for ${data.course_name}`);
       if (assignmentsMsg.length > 0) {
         assignmentsMsg.forEach((tempAssigmentMsg) => {
           const dueDateFormatted = moment(tempAssigmentMsg.due_at);

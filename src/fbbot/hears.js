@@ -346,6 +346,21 @@ module.exports = (controller) => {
     sendHelpCommandMessage(bot, message);
   });
 
+  controller.hears('^announcements', 'message_received', (bot, message) => {
+    message.payload = JSON.stringify({
+      action: 'getAnnouncements',
+    });
+    controller.trigger('facebook_postback', [bot, message]);
+  });
+
+  controller.hears('^upcoming hw', 'message_received', (bot, message) => {
+    message.payload = JSON.stringify({
+      action: 'getUpcomingHw',
+    });
+    controller.trigger('facebook_postback', [bot, message]);
+  });
+
+
   // user says anything else
   // controller.hears('(.*)', 'message_received', (bot, message) => {
   //   bot.reply(message, `You said ${message.match[1]}`);
