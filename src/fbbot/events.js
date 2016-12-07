@@ -274,9 +274,10 @@ function getSchedule(userId, controller) {
 
             // For each One UF course...
             resDatas.forEach((course) => {
+              console.log('DATA IS ');
+              console.log(course[0].COURSES);
               // Extract the relevant data from the JSON
-              const matchedCourse = JSON.parse(course[0].COURSES)[0];
-              // LOG HERE
+              const matchedCourse = course[0].COURSES[0];
               const courseCode = matchedCourse.code;
               // Get the sections from One UF
               const sections = matchedCourse.sections;
